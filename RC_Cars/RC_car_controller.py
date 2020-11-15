@@ -64,6 +64,7 @@ class MotorDriver:
 
 
 speedController = MotorDriver()
+speedController.set_stand_by(False)
 speedController.m1_speed(65535)
 uart = busio.UART(board.TX, board.RX, baudrate=9600)
 
