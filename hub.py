@@ -34,6 +34,7 @@ target_address = None
 
 # Variables for controlling boost logic.
 # TODO tweak these until they are reasonable, like a couple seconds of boost then a longer recharge
+# TODO probably should re-implement this using time so we can precisely say x seconds of boost
 # TODO maybe change it to an all or nothing thing, ie can only boost when tank full, goes until empty
 boost_tank_max_capacity = 100
 boost_tank = boost_tank_max_capacity
