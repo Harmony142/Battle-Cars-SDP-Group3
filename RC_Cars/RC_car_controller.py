@@ -34,21 +34,24 @@ class MotorDriver:
         self.standby.direction = Direction.OUTPUT
 
     def turn_left(self):
-        self.M1D_AI1.value, self.M1D_AI1.value = True, False
+        self.M1D_AI1.value, self.M1D_AI2.value = True, False
 
     def turn_right(self):
-        self.M1D_AI1.value, self.M1D_AI1.value = False, True
+        self.M1D_AI1.value, self.M1D_AI2.value = False, True
 
     def straight(self):
-        # TODO check why we're setting the same value twice
         # TODO check if this should be True, True
-        self.M1D_AI1.value, self.M1D_AI1.value = False, False
+        self.M1D_AI1.value, self.M1D_AI2.value = False, False
 
     def forward(self):
         self.M2D_BI1.value, self.M2D_BI2.value = True, False  # counter clock wise
 
     def backward(self):
         self.M2D_BI1.value, self.M2D_BI2.value = False, True  # clock wise
+
+    def stop(self):
+        # TODO check if this should be True, True
+        self.M2D_BI1.value, self.M2D_BI2.value = False, False
 
     def m1_speed(self, speed):
         self.M1_SC.duty_cycle = speed
@@ -57,10 +60,11 @@ class MotorDriver:
         self.M2_SC.duty_cycle = speed
     
     def set_stand_by(self, standby):  # True = active
-        self.standby.value = standby
+        self.standby.value = not standby
 
 
 speedController = MotorDriver()
+speedController.m1_speed(65535)
 uart = busio.UART(board.TX, board.RX, baudrate=9600)
 
 # you need to write a function for speed
@@ -70,7 +74,7 @@ while True:
     data = uart.read(1)
 
     if data is not None:
-        command_flags = 0x00
+        command_flags = int.from_bytes(data, 'little')
         '''
         Interpret the commands coming from the hub
         Bit Positions
@@ -88,33 +92,26 @@ while True:
 
         # TODO test if these are the proper driver board commands, I just had to guess
         # Control forwards or backwards
-        if forward_backwards == 0b10:
+        if forward_backwards == 0b01:
             speedController.forward()
-        elif forward_backwards == 0b01:
+        elif forward_backwards == 0b10:
             speedController.backward()
         else:
-            speedController.set_stand_by(True)
+            speedController.stop()
 
         # Control steering
-        if left_right == 0b10:
+        if left_right == 0b01:
             speedController.turn_left()
-        elif left_right == 0b01:
+        elif left_right == 0b10:
             speedController.turn_right()
         else:
-            # TODO see if there's a better way to do this
             speedController.straight()
 
         # Control speed boost. Logic is handled by the hub to avoid having to send the data back from the
         # car if we ever want to show fuel tank capacity
         # TODO tweak these speeds until they feel appropriate
-        # TODO check that this is the correct motor (forward/backwards), it's my best guess from the comments
         if boost:
             speedController.m2_speed(65535)
         else:
-            speedController.m2_speed(65535/2)
-
-        # speedController.turn_left()
-        # speedController.m1_speed(65535)
-        # speedController.set_stand_by(True)
-        # time.sleep(0.1)
+            speedController.m2_speed(65535//4)
 
