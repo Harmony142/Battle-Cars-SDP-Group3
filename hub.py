@@ -4,7 +4,7 @@ from time import sleep
 import keyboard
 from inputs import devices
 
-'''
+"""
 ----- TO INSTALL PYBLUEZ ON WINDOWS -----
 https://visualstudio.microsoft.com/downloads/
 Download and run visual studio community edition installer
@@ -20,7 +20,7 @@ create a file anywhere, open it and run powershell as admin using file in top le
 git clone https://github.com/pybluez/pybluez
 cd pybluez
 <conda env file>/python.exe setup.py install
-'''
+"""
 # TODO see how fast we can pump updates to the car, currently doing every half seconds to stay modest (way too slow tho)
 # TODO test if disconnect/failure to connect catch statement works
 # TODO test if we can control the car with WASD if controller is
@@ -153,6 +153,7 @@ while True:
 
                 # Send the data over bluetooth
                 sock.send(command_flags)
+                sleep(1)
         else:
             print("could not find target bluetooth device nearby")
     except OSError:

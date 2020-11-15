@@ -2,6 +2,7 @@
 import time
 import board
 import pulseio
+import busio
 from digitalio import DigitalInOut, Direction
 
 
@@ -60,59 +61,60 @@ class MotorDriver:
 
 
 speedController = MotorDriver()
+uart = busio.UART(board.TX, board.RX, baudrate=9600)
 
 # you need to write a function for speed
 # decide how to increment/decrement it
 while True:
     # Read data from uart coming from the bluetooth module
-    # TODO need the board + bluetooth module to test loading data from uart,
-    #  probably need a if(data available) then read statement
-    command_flags = 0x00
+    data = uart.read(1)
 
-    '''
-    Interpret the commands coming from the hub
-    Bit Positions
-    76543210
-    0: Y pressed
-    1: B pressed
-    2: A pressed
-    3: X pressed
-    4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
-    6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
-    '''
-    forward_backwards = (command_flags & (0b11 << 4)) >> 4
-    left_right = (command_flags & (0b11 << 6)) >> 6
-    boost = command_flags & 0b1111
+    if data is not None:
+        command_flags = 0x00
+        '''
+        Interpret the commands coming from the hub
+        Bit Positions
+        76543210
+        0: Y pressed
+        1: B pressed
+        2: A pressed
+        3: X pressed
+        4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
+        6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
+        '''
+        forward_backwards = (command_flags & (0b11 << 4)) >> 4
+        left_right = (command_flags & (0b11 << 6)) >> 6
+        boost = command_flags & 0b1111
 
-    # TODO test if these are the proper driver board commands, I just had to guess
-    # Control forwards or backwards
-    if forward_backwards == 0b10:
-        speedController.forward()
-    elif forward_backwards == 0b01:
-        speedController.backward()
-    else:
-        speedController.set_stand_by(True)
+        # TODO test if these are the proper driver board commands, I just had to guess
+        # Control forwards or backwards
+        if forward_backwards == 0b10:
+            speedController.forward()
+        elif forward_backwards == 0b01:
+            speedController.backward()
+        else:
+            speedController.set_stand_by(True)
 
-    # Control steering
-    if left_right == 0b10:
-        speedController.turn_left()
-    elif left_right == 0b01:
-        speedController.turn_right()
-    else:
-        # TODO see if there's a better way to do this
-        speedController.straight()
+        # Control steering
+        if left_right == 0b10:
+            speedController.turn_left()
+        elif left_right == 0b01:
+            speedController.turn_right()
+        else:
+            # TODO see if there's a better way to do this
+            speedController.straight()
 
-    # Control speed boost. Logic is handled by the hub to avoid having to send the data back from the
-    # car if we ever want to show fuel tank capacity
-    # TODO tweak these speeds until they feel appropriate
-    # TODO check that this is the correct motor (forward/backwards), it's my best guess from the comments
-    if boost:
-        speedController.m2_speed(65535)
-    else:
-        speedController.m2_speed(65535/2)
+        # Control speed boost. Logic is handled by the hub to avoid having to send the data back from the
+        # car if we ever want to show fuel tank capacity
+        # TODO tweak these speeds until they feel appropriate
+        # TODO check that this is the correct motor (forward/backwards), it's my best guess from the comments
+        if boost:
+            speedController.m2_speed(65535)
+        else:
+            speedController.m2_speed(65535/2)
 
-    # speedController.turn_left()
-    # speedController.m1_speed(65535)
-    # speedController.set_stand_by(True)
-    # time.sleep(0.1)
+        # speedController.turn_left()
+        # speedController.m1_speed(65535)
+        # speedController.set_stand_by(True)
+        # time.sleep(0.1)
 
