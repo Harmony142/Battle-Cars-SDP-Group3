@@ -21,12 +21,11 @@ git clone https://github.com/pybluez/pybluez
 cd pybluez
 <conda env file>/python.exe setup.py install
 """
-# TODO see how fast we can pump updates to the car, currently doing every half seconds to stay modest (way too slow tho)
-# TODO test if disconnect/failure to connect catch statement works
-# TODO test if we can control the car with WASD if controller is
-#  not plugged in (have to implement the receiving end first)
-# TODO test if we can control the car with controller if plugged in (have to implement the receiving end first)
-# TODO investigate multithreading/REST interfaces to allow streaming commands to multiple machines
+# TODO test if updates only happen on state change
+# TODO test if boost bug is fixed
+# TODO test if WASD bug is fixed
+# TODO test if we can control the car with controller if plugged in
+# TODO investigate multithreading/REST interfaces to allow streaming commands to multiple cars
 # TODO see if we can connect to HC-05's without passwords disabled, not vital
 
 # Pair HC-05 with PC first
@@ -154,6 +153,7 @@ while True:
 
                 # Send the data over bluetooth if the state has changed
                 if command_flags != previous_command_flags:
+                    print('Sending: {0:#010b}'.format(command_flags))
                     sock.send(command_flags)
                     previous_command_flags = command_flags
 
