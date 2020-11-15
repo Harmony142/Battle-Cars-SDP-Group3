@@ -40,7 +40,6 @@ class MotorDriver:
         self.M1D_AI1.value, self.M1D_AI2.value = False, True
 
     def straight(self):
-        # TODO check if this should be True, True
         self.M1D_AI1.value, self.M1D_AI2.value = False, False
 
     def forward(self):
@@ -50,7 +49,6 @@ class MotorDriver:
         self.M2D_BI1.value, self.M2D_BI2.value = False, True  # clock wise
 
     def stop(self):
-        # TODO check if this should be True, True
         self.M2D_BI1.value, self.M2D_BI2.value = False, False
 
     def m1_speed(self, speed):
@@ -91,19 +89,18 @@ while True:
         left_right = (command_flags & (0b11 << 6)) >> 6
         boost = command_flags & 0b1111
 
-        # TODO test if these are the proper driver board commands, I just had to guess
         # Control forwards or backwards
-        if forward_backwards == 0b01:
+        if forward_backwards == 0b10:
             speedController.forward()
-        elif forward_backwards == 0b10:
+        elif forward_backwards == 0b01:
             speedController.backward()
         else:
             speedController.stop()
 
         # Control steering
-        if left_right == 0b01:
+        if left_right == 0b10:
             speedController.turn_left()
-        elif left_right == 0b10:
+        elif left_right == 0b01:
             speedController.turn_right()
         else:
             speedController.straight()

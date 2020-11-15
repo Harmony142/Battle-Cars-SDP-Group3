@@ -13,7 +13,7 @@ Select Visual C++ build tools workload and install
 https://github.com/pybluez/pybluez/issues/180
 Install anaconda
 create a python 3.7 env using conda create -n <name> python==3.7
-find conda env file, mine was C:\Users\logan\.conda\envs\pybluez
+find conda env file, mine was C:\\Users\\logan\\.conda\\envs\\pybluez
 
 Install git
 create a file anywhere, open it and run powershell as admin using file in top left
@@ -41,13 +41,15 @@ boost_tank = boost_tank_max_capacity
 boost_tank_depletion_rate = 10
 
 # Try reconnecting if it fails to connect or the connection is lost
+previous_command_flags = 0x00
 while True:
     try:
         # Scan for nearby devices
+        print('Scanning for nearby devices...')
         nearby_devices = bluetooth.discover_devices()
-        print(nearby_devices)
 
         # Try and find our bluetooth module
+        print('Searching for our bluetooth module...')
         for bluetooth_device_address in nearby_devices:
             print(bluetooth.lookup_name(bluetooth_device_address))
             if target_name == bluetooth.lookup_name(bluetooth_device_address):
@@ -60,7 +62,6 @@ while True:
             sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 
             print("Attempting to connect")
-
             # Loop over ports until we find one that works (kinda hacky but it works)
             i = 0
             max_port = 3
@@ -130,13 +131,13 @@ while True:
 
                 except IndexError:
                     # Read keyboard commands since we couldn't find a controller
-                    if keyboard.is_pressed('w'):
-                        command_flags |= 1 << 4
                     if keyboard.is_pressed('s'):
+                        command_flags |= 1 << 4
+                    if keyboard.is_pressed('w'):
                         command_flags |= 1 << 5
-                    if keyboard.is_pressed('d'):
-                        command_flags |= 1 << 6
                     if keyboard.is_pressed('a'):
+                        command_flags |= 1 << 6
+                    if keyboard.is_pressed('d'):
                         command_flags |= 1 << 7
 
                     if keyboard.is_pressed('shift'):
@@ -145,16 +146,22 @@ while True:
                 # Boost logic
                 if boost_tank < boost_tank_max_capacity:
                     boost_tank += 1
-                if command_flags | 0b1111:
+                if command_flags & 0b1111:
                     if boost_tank < boost_tank_depletion_rate:
                         command_flags &= 0b1111 << 4
                     else:
                         boost_tank -= boost_tank_depletion_rate
 
-                # Send the data over bluetooth
-                sock.send(command_flags)
-                sleep(1)
+                # Send the data over bluetooth if the state has changed
+                if command_flags != previous_command_flags:
+                    sock.send(command_flags)
+                    previous_command_flags = command_flags
+
+                    # Limit how fast we can send updates to once every 10th of a second
+                    # as not to overwhelm the receiver's message buffer
+                    sleep(.1)
+
         else:
-            print("could not find target bluetooth device nearby")
+            print("Failed to find target bluetooth device nearby")
     except OSError:
         print('Disconnected from bluetooth receiver, attempting to reconnect')
