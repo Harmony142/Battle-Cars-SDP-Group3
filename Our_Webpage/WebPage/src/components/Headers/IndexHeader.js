@@ -17,6 +17,12 @@ const video={
   alignItems: "center",
 };
 
+const handleKeyPress = (event) => {
+  console.log("Hello")
+  // sendMessage(JSON.stringify(keysPressed));
+  // setNewMessage("");
+}
+
 
 function IndexHeader() {
   return (
@@ -27,14 +33,15 @@ function IndexHeader() {
           backgroundImage:
             "url(" + require("assets/img/space.jpg") + ")",
         }}
+        onKeyPress={handleKeyPress}
       >
-        <div vertical layout>
+        <div vertical="true" layout>
         <App />
         <script>alert(1)</script>
         <div>
           <b style={Boom}>Boom Boom Cars</b>
         </div>
-        <div style={video}><iframe src="https://viewer.millicast.com/v2?streamId=hrFywT/kgplc3ye" allowfullscreen align="middle" width="640" height="480"></iframe></div>
+        <div style={video}><iframe src="https://viewer.millicast.com/v2?streamId=hrFywT/kgplc3ye" allowFullScreen align="middle" width="640" height="480"></iframe></div>
         </div>
         <div
           className="moving-clouds"
