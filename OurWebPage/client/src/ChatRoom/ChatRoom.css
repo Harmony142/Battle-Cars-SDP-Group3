@@ -1,0 +1,32 @@
+.room-name {
+    position: absolute;
+    margin-top: 0;
+    color: white;
+}
+
+.room-video {
+    position: absolute;
+    color: white;
+    /* align-content: middle; */
+    width: 640px;
+    height: 480px;
+    left: 50%;
+    margin-left: -320px;   
+    top: 50%;  
+    margin-top: -240px;
+}
+
+
+.room-page {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+
+.new-message-input-field {
+    position: absolute;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    opacity: 0%;
+}
