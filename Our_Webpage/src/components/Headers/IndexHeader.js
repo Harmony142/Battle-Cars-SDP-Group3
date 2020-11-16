@@ -1,8 +1,7 @@
 
 import React from "react";
 
-// reactstrap components
-
+import App from "components/Headers/HeadComp/App.js"
 // core components
 const Boom = {
   color: "white",
@@ -18,6 +17,7 @@ const video={
   alignItems: "center",
 };
 
+
 function IndexHeader() {
   return (
     <>
@@ -29,6 +29,8 @@ function IndexHeader() {
         }}
       >
         <div vertical layout>
+        <App />
+        <script>alert(1)</script>
         <div>
           <b style={Boom}>Boom Boom Cars</b>
         </div>
