@@ -1,10 +1,12 @@
+
 import time
 import board
 import pulseio
+import busio
 from digitalio import DigitalInOut, Direction
 
-class MotorDriver:
 
+class MotorDriver:
     def __init__(self):
         # motor 1 will most likely be the direction controller
 
@@ -30,13 +32,15 @@ class MotorDriver:
 
         self.standby = DigitalInOut(board.D6)
         self.standby.direction = Direction.OUTPUT
-        
 
-    def turnleft(self):
-        self.M1D_AI1.value, self.M1D_AI1.value = True, False
+    def turn_left(self):
+        self.M1D_AI1.value, self.M1D_AI2.value = True, False
 
-    def turnright(self):
-        self.M1D_AI1.value, self.M1D_AI1.value = False, True
+    def turn_right(self):
+        self.M1D_AI1.value, self.M1D_AI2.value = False, True
+
+    def straight(self):
+        self.M1D_AI1.value, self.M1D_AI2.value = False, False
 
     def forward(self):
         self.M2D_BI1.value, self.M2D_BI2.value = True, False  # counter clock wise
@@ -44,22 +48,68 @@ class MotorDriver:
     def backward(self):
         self.M2D_BI1.value, self.M2D_BI2.value = False, True  # clock wise
 
+    def stop(self):
+        self.M2D_BI1.value, self.M2D_BI2.value = False, False
+
     def m1_speed(self, speed):
         self.M1_SC.duty_cycle = speed
         
     def m2_speed(self, speed):
         self.M2_SC.duty_cycle = speed
     
-    def setstandby(self, standby):  # True = active
-        self.standby.value = standby
-        
+    def set_stand_by(self, standby):  # True = active
+        self.standby.value = not standby
+
+
 speedController = MotorDriver()
+speedController.set_stand_by(False)
+speedController.m1_speed(65535)
+uart = busio.UART(board.TX, board.RX, baudrate=9600)
 
 # you need to write a function for speed
 # decide how to increment/decrement it
 while True:
-    speedController.turnleft()
-    speedController.m1_speed(65535)
-    speedController.setstandby(True)
-    # time.sleep(0.1)
+    # Read data from uart coming from the bluetooth module
+    data = uart.read(1)
+
+    if data is not None:
+        command_flags = int.from_bytes(data, 'little')
+        '''
+        Interpret the commands coming from the hub
+        Bit Positions
+        76543210
+        0: Y pressed
+        1: B pressed
+        2: A pressed
+        3: X pressed
+        4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
+        6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
+        '''
+        forward_backwards = (command_flags & (0b11 << 4)) >> 4
+        left_right = (command_flags & (0b11 << 6)) >> 6
+        boost = command_flags & 0b1111
+
+        # Control forwards or backwards
+        if forward_backwards == 0b10:
+            speedController.forward()
+        elif forward_backwards == 0b01:
+            speedController.backward()
+        else:
+            speedController.stop()
+
+        # Control steering
+        if left_right == 0b10:
+            speedController.turn_left()
+        elif left_right == 0b01:
+            speedController.turn_right()
+        else:
+            speedController.straight()
+
+        # Control speed boost. Logic is handled by the hub to avoid having to send the data back from the
+        # car if we ever want to show fuel tank capacity
+        # TODO tweak these speeds until they feel appropriate
+        if boost:
+            speedController.m2_speed(65535)
+        else:
+            speedController.m2_speed(65535//4)
 
