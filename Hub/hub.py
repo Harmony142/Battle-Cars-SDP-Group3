@@ -95,7 +95,7 @@ def read_database_commands(cl, it):
     )
     # pp.pprint(response['Records'])
     if 'NextShardIterator' in response.keys():
-        shard_iterator = response['NextShardIterator']
+        it = response['NextShardIterator']
 
     if 'Records' in response.keys() and len(response['Records']) > 0:
         keys_pressed = json.loads(response['Records'][0]['dynamodb']['NewImage']['description']['S'])
@@ -113,8 +113,10 @@ def read_database_commands(cl, it):
 
         if keys_pressed['ShiftLeft']:
             cmd_flags |= 0b1111
+    else:
+        cmd_flags = previous_command_flags
 
-    return cmd_flags
+    return cmd_flags, it
 
 
 # Variables for connecting to the database for streaming commands from the web page
@@ -253,7 +255,7 @@ while True:
                 # Send the data over bluetooth if the state has changed
                 if command_flags != previous_command_flags:
                     print('Sending: {0:#010b}'.format(command_flags))
-                    sock.send(command_flags)
+                    sock.send(command_flags.to_bytes(1, "little"))
                     previous_command_flags = command_flags
 
                     # Limit how fast we can send updates to once every 10th of a second
