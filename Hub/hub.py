@@ -256,9 +256,9 @@ while True:
             print('Connected to {} at {}:{}'.format(target_name, target_address, port))
 
             keyboard_override_hot_key = 't'
-            keyboard_override = True
+            keyboard_override = False
             while True:
-                # Toggle for keyboard override. If you want
+                # Toggle for keyboard override. If you want to control from the hub directly
                 if keyboard.is_pressed(keyboard_override_hot_key):
                     # Switch toggle and wait until key is not pressed
                     keyboard_override = not keyboard_override
