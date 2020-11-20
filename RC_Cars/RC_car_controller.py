@@ -1,10 +1,10 @@
-
 import time
 import board
 import pulseio
 import busio
+import digitalio
 from digitalio import DigitalInOut, Direction
-
+from analogio import AnalogIn
 
 class MotorDriver:
     def __init__(self):
@@ -53,10 +53,10 @@ class MotorDriver:
 
     def m1_speed(self, speed):
         self.M1_SC.duty_cycle = speed
-        
+
     def m2_speed(self, speed):
         self.M2_SC.duty_cycle = speed
-    
+
     def set_stand_by(self, standby):  # True = active
         self.standby.value = not standby
 
@@ -66,14 +66,29 @@ speedController.set_stand_by(False)
 speedController.m1_speed(65535)
 uart = busio.UART(board.TX, board.RX, baudrate=9600)
 
-# you need to write a function for speed
-# decide how to increment/decrement it
+led = digitalio.DigitalInOut(board.D13)
+led.direction = digitalio.Direction.OUTPUT
+
+
+threshold = 33620
+analog_in = AnalogIn(board.A0)
+
+def get_voltage(pin):
+    return pin.value
+
+
 while True:
+    if get_voltage(analog_in) > threshold:  # gyroscope
+        led.value = True
+    else:
+        led.value = False
+
     # Read data from uart coming from the bluetooth module
     data = uart.read(1)
-
+    # print(data)
     if data is not None:
         command_flags = int.from_bytes(data, 'little')
+        print(command_flags)
         '''
         Interpret the commands coming from the hub
         Bit Positions
@@ -109,7 +124,9 @@ while True:
         # car if we ever want to show fuel tank capacity
         # TODO tweak these speeds until they feel appropriate
         if boost:
+            speedController.m1_speed(65535)
             speedController.m2_speed(65535)
         else:
-            speedController.m2_speed(65535//4)
+            speedController.m1_speed(65535)
+            speedController.m2_speed(65535)
 
