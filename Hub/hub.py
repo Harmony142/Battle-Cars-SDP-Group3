@@ -169,6 +169,8 @@ print('Shard iterator: ', shard_iterator)
 # TODO test if updates only happen on state change
 # TODO test if boost bug is fixed
 # TODO test if WASD bug is fixed
+# TODO add controls to webpage
+# TODO add score feedback to webpage
 # TODO test if we can control the car with controller if plugged in
 # TODO investigate multithreading/REST interfaces to allow streaming commands to multiple cars
 # TODO see if we can connect to HC-05's without passwords disabled, not vital
@@ -181,6 +183,7 @@ target_address = None
 # TODO tweak these until they are reasonable, like a couple seconds of boost then a longer recharge
 # TODO probably should re-implement this using time so we can precisely say x seconds of boost
 # TODO maybe change it to an all or nothing thing, ie can only boost when tank full, goes until empty
+# TODO add boost tank feedback to webpage
 boost_tank_max_capacity = 100
 boost_tank = boost_tank_max_capacity
 boost_tank_depletion_rate = 10
