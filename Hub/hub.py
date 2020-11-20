@@ -239,9 +239,9 @@ while True:
 
             print("Attempting to connect")
             # Loop over ports until we find one that works (kinda hacky but it works)
-            i = 0
+            port = 0
             max_port = 3
-            for port in range(i, max_port + 1):
+            for port in range(port, max_port + 1):
                 print("Checking Port ", port)
                 try:
                     sock.connect((target_address, port))
@@ -250,8 +250,10 @@ while True:
                     pass
 
             # Retry connection if we failed to connect
-            if i > max_port:
+            if port > max_port:
                 raise OSError('Failed to connect')
+
+            print('Connected to {} at {}:{}'.format(target_name, target_address, port))
 
             keyboard_override_hot_key = 't'
             keyboard_override = True
