@@ -27,6 +27,16 @@ cd pybluez
 
 
 def read_keyboard_commands():
+    """
+    Bit Positions
+    76543210
+    0: Y pressed
+    1: B pressed
+    2: A pressed
+    3: X pressed
+    4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
+    6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
+    """
     cmd_flags = 0x00
     if keyboard.is_pressed('s'):
         cmd_flags |= 1 << 4
@@ -44,6 +54,16 @@ def read_keyboard_commands():
 
 
 def read_controller_commands():
+    """
+    Bit Positions
+    76543210
+    0: Y pressed
+    1: B pressed
+    2: A pressed
+    3: X pressed
+    4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
+    6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
+    """
     cmd_flags = 0x00
 
     # Try to find a controller if plugged in
@@ -87,8 +107,16 @@ def read_controller_commands():
 
 
 def read_database_commands(cl, it):
-    cmd_flags = None
-
+    """
+    Bit Positions
+    76543210
+    0: Y pressed
+    1: B pressed
+    2: A pressed
+    3: X pressed
+    4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
+    6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
+    """
     response = cl.get_records(
         ShardIterator=it
         # Limit=1
@@ -214,7 +242,7 @@ while True:
             i = 0
             max_port = 3
             for port in range(i, max_port + 1):
-                print("Checking Port ", i)
+                print("Checking Port ", port)
                 try:
                     sock.connect((target_address, port))
                     break
@@ -225,26 +253,29 @@ while True:
             if i > max_port:
                 raise OSError('Failed to connect')
 
-            '''
-            Send user commands over the network, reading from a plugged in controller or WASD on the keyboard
-            Bit Positions
-            76543210
-            0: Y pressed
-            1: B pressed
-            2: A pressed
-            3: X pressed
-            4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
-            6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
-            '''
+            keyboard_override_hot_key = 't'
+            keyboard_override = True
             while True:
+                # Toggle for keyboard override. If you want
+                if keyboard.is_pressed(keyboard_override_hot_key):
+                    # Switch toggle and wait until key is not pressed
+                    keyboard_override = not keyboard_override
+                    while keyboard.is_pressed(keyboard_override_hot_key):
+                        pass
+
+                # Read from different control sources
                 command_flags = 0x00
+                source_string = 'Controller'
                 try:
                     # Raises index error if a controller is not found
                     command_flags = read_controller_commands()
                 except IndexError:
                     # Read keyboard commands since we couldn't find a controller
+                    source_string = 'Database'
                     command_flags, shard_iterator = read_database_commands(client, shard_iterator)
-                    command_flags |= read_keyboard_commands()
+                    if keyboard_override:
+                        source_string = 'Keyboard'
+                        command_flags = read_keyboard_commands()
 
                 # Boost logic
                 if boost_tank < boost_tank_max_capacity:
@@ -257,7 +288,17 @@ while True:
 
                 # Send the data over bluetooth if the state has changed
                 if command_flags != previous_command_flags:
-                    print('Sending: {0:#010b}'.format(command_flags))
+                    """
+                    Bit Positions
+                    76543210
+                    0: Y pressed
+                    1: B pressed
+                    2: A pressed
+                    3: X pressed
+                    4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
+                    6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
+                    """
+                    print('Sending {0:#010b} from {1}'.format(command_flags, source_string))
                     sock.send(command_flags.to_bytes(1, "little"))
                     previous_command_flags = command_flags
 
