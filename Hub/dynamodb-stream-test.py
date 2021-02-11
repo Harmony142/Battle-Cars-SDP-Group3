@@ -43,8 +43,10 @@ response = client.describe_stream(
 )
 # pp.pprint(response['StreamDescription'])
 # TODO: figure out why the hell this is 2
-shard_id = response['StreamDescription']['Shards'][2]['ShardId']
 
+shard_id = response['StreamDescription']['Shards'][-3]['ShardId']
+
+pp.pprint(response)
 # Get the first shard iterator of the latest shard
 response = client.get_shard_iterator(
     StreamArn=stream_arn,
@@ -54,17 +56,17 @@ response = client.get_shard_iterator(
 # pp.pprint(response['ShardIterator'])
 shard_iterator = response['ShardIterator']
 print('Shard iterator: ', shard_iterator)
-
+print(shard_id)
 while True:
     response = client.get_records(
         ShardIterator=shard_iterator
         # Limit=1
     )
-    # pp.pprint(response['Records'])
+
     if 'Records' in response.keys():
         if len(response['Records']) > 0:
             keys_pressed = json.loads(response['Records'][0]['dynamodb']['NewImage']['description']['S'])
-            # pp.pprint(keys_pressed)
+            pp.pprint(keys_pressed)
 
     if 'NextShardIterator' in response.keys():
         shard_iterator = response['NextShardIterator']
