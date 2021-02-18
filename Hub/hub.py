@@ -1,4 +1,3 @@
-
 import bluetooth
 from time import sleep
 import keyboard
@@ -12,12 +11,10 @@ import json
 https://visualstudio.microsoft.com/downloads/
 Download and run visual studio community edition installer
 Select Visual C++ build tools workload and install
-
 https://github.com/pybluez/pybluez/issues/180
 Install anaconda
 create a python 3.7 env using conda create -n <name> python==3.7
 find conda env file, mine was C:\\Users\\logan\\.conda\\envs\\pybluez
-
 Install git
 create a file anywhere, open it and run powershell as admin using file in top left
 git clone https://github.com/pybluez/pybluez
@@ -127,7 +124,7 @@ def read_database_commands(cl, it):
 
     if 'Records' in response.keys() and len(response['Records']) > 0:
         keys_pressed = json.loads(response['Records'][0]['dynamodb']['NewImage']['description']['S'])
-
+        print(keys_pressed)
         cmd_flags = 0x00
 
         if keys_pressed['KeyS']:
@@ -181,7 +178,7 @@ print('Found stream: ', stream_arn)
 response = client.describe_stream(
     StreamArn=stream_arn
 )
-shard_id = response['StreamDescription']['Shards'][2]['ShardId']
+shard_id = response['StreamDescription']['Shards'][-3]['ShardId']
 
 # Get the first shard iterator of the latest shard
 response = client.get_shard_iterator(
@@ -259,9 +256,11 @@ while True:
             keyboard_override = False
             while True:
                 # Toggle for keyboard override. If you want to control from the hub directly
+                
                 if keyboard.is_pressed(keyboard_override_hot_key):
                     # Switch toggle and wait until key is not pressed
                     keyboard_override = not keyboard_override
+                    print("Toggled keyboard override: ", "on" if keyboard_override else "off")
                     while keyboard.is_pressed(keyboard_override_hot_key):
                         pass
 
