@@ -1,8 +1,8 @@
 {
-    "identityPoolName": "sdpwebpage5a84f6c9_identitypool_5a84f6c9",
+    "identityPoolName": "fpvcarwebpagec05f98ca_identitypool_c05f98ca",
     "allowUnauthenticatedIdentities": false,
-    "resourceNameTruncated": "sdpweb5a84f6c9",
-    "userPoolName": "sdpwebpage5a84f6c9_userpool_5a84f6c9",
+    "resourceNameTruncated": "fpvcarc05f98ca",
+    "userPoolName": "fpvcarwebpagec05f98ca_userpool_c05f98ca",
     "autoVerifiedAttributes": [
         "email"
     ],
@@ -28,10 +28,10 @@
     "userpoolClientReadAttributes": [
         "email"
     ],
-    "userpoolClientLambdaRole": "sdpweb5a84f6c9_userpoolclient_lambda_role",
+    "userpoolClientLambdaRole": "fpvcarc05f98ca_userpoolclient_lambda_role",
     "userpoolClientSetAttributes": false,
-    "sharedId": "5a84f6c9",
-    "resourceName": "sdpwebpage5a84f6c9",
+    "sharedId": "c05f98ca",
+    "resourceName": "fpvcarwebpagec05f98ca",
     "authSelections": "identityPoolAndUserPool",
     "authRoleArn": {
         "Fn::GetAtt": [

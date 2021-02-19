@@ -1,46 +1,48 @@
 import React from "react";
 import "./ChatRoom.css";
+import Space from './space.jpg';
 import { API } from 'aws-amplify';
-import { updateTodo as updateTodo} from '../graphql/mutations';
-import Space from './space.jpg'
+import { updateTodo } from '../graphql/mutations';
 
-const prev_keysPressed = {'w':false, 'a':false, 's':false, 'd':false};
-const curr_keysPressed = {'w':false, 'a':false, 's':false, 'd':false};
+// updateTodo
+const prev_keysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
+const curr_keysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
 const formData = {id: 1234, name: "hello", description: ""}
 
-const ChatRoom = (props) => {
-  // const { roomId } = props.match.params;
-  // const { messages, sendMessage } = useChat(roomId);
-  const [newMessage, setNewMessage] = React.useState("");
-  document.addEventListener('keydown', e => curr_keysPressed[e.key] = true)
-  document.addEventListener('keyup', e => curr_keysPressed[e.key] = false)
+const allowed_keys = Object.keys(curr_keysPressed);
+// console.log(JSON.stringify(allowed_keys));
 
-  document.body.style.overflow = "hidden"
+document.addEventListener('keydown', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = true;}});
+document.addEventListener('keyup', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = false;}});
+
+document.body.style.overflow = "hidden";
+
+const ChatRoom = (props) => {
+  const [newMessage, setNewMessage] = React.useState("");
 
   const handleKeyPress = (event) => {
     if(JSON.stringify(prev_keysPressed) !== JSON.stringify(curr_keysPressed)){
       createNote();
-      prev_keysPressed['w'] = curr_keysPressed['w'];
-      prev_keysPressed['a'] = curr_keysPressed['a'];
-      prev_keysPressed['s'] = curr_keysPressed['s'];
-      prev_keysPressed['d'] = curr_keysPressed['d'];
+      allowed_keys.forEach(key => prev_keysPressed[key] = curr_keysPressed[key]);
     }
   }
 
   async function createNote() {
-    formData.description = JSON.stringify(curr_keysPressed);
-    await API.graphql({ query: updateTodo, variables: { input: formData } });
-    console.log("Hi")
+    const payload = JSON.parse(JSON.stringify(curr_keysPressed));
+    var d = new Date();
+    payload['StartTime'] = d.getTime();
+    formData.description = JSON.stringify(payload);
+    API.graphql({ query: updateTodo, variables: { input: formData } });
+    console.log(formData);
   }
 
   const handleNewMessageChange = (event) => {
-    //setNewMessage(event.target.value);
   };
 
 
   return (
     <div  onKeyUp={handleKeyPress} onKeyDown={handleKeyPress}>
-      <img className="room-page" src={Space}/>
+      <img className="room-page" src={Space} alt=''/>
       <iframe src="https://viewer.millicast.com/v2?streamId=hrFywT/kgplc3ye" allowFullScreen className="room-video"></iframe>
       {/* <h1 className="room-name">Name: {roomId}</h1> */}
       <textarea

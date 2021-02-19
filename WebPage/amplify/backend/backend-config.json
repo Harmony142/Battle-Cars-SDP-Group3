@@ -1,6 +1,6 @@
 {
   "auth": {
-    "sdpwebpage5a84f6c9": {
+    "fpvcarwebpagec05f98ca": {
       "service": "Cognito",
       "providerPlugin": "awscloudformation",
       "dependsOn": [],
@@ -8,7 +8,7 @@
     }
   },
   "api": {
-    "sdpwebpage": {
+    "carmove": {
       "service": "AppSync",
       "providerPlugin": "awscloudformation",
       "output": {
@@ -17,7 +17,7 @@
             "authenticationType": "API_KEY",
             "apiKeyConfig": {
               "apiKeyExpirationDays": 365,
-              "description": "demo"
+              "description": "car movements"
             }
           },
           "additionalAuthenticationProviders": []

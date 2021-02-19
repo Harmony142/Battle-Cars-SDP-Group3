@@ -1,19 +1,37 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-sdpwebpage-dev-212116-authRole",
-      "UnauthRoleArn": "arn:aws:iam::614103748137:role/amplify-sdpwebpage-dev-212116-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::614103748137:role/amplify-sdpwebpage-dev-212116-authRole",
+      "AuthRoleName": "amplify-fpvcarwebpage-dev-84332-authRole",
+      "UnauthRoleArn": "arn:aws:iam::614103748137:role/amplify-fpvcarwebpage-dev-84332-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::614103748137:role/amplify-fpvcarwebpage-dev-84332-authRole",
       "Region": "us-east-2",
-      "DeploymentBucketName": "amplify-sdpwebpage-dev-212116-deployment",
-      "UnauthRoleName": "amplify-sdpwebpage-dev-212116-unauthRole",
-      "StackName": "amplify-sdpwebpage-dev-212116",
-      "StackId": "arn:aws:cloudformation:us-east-2:614103748137:stack/amplify-sdpwebpage-dev-212116/9346c7f0-287b-11eb-a239-0ae88afcf40c",
-      "AmplifyAppId": "d3sj4oz8tijtb3"
+      "DeploymentBucketName": "amplify-fpvcarwebpage-dev-84332-deployment",
+      "UnauthRoleName": "amplify-fpvcarwebpage-dev-84332-unauthRole",
+      "StackName": "amplify-fpvcarwebpage-dev-84332",
+      "StackId": "arn:aws:cloudformation:us-east-2:614103748137:stack/amplify-fpvcarwebpage-dev-84332/e2f43990-28da-11eb-9943-0a7c693bb1e6",
+      "AmplifyAppId": "dq7482j7vs7v5"
     },
     "categories": {
       "auth": {
-        "sdpwebpage5a84f6c9": {}
+        "fpvcarwebpagec05f98ca": {}
+      }
+    }
+  },
+  "webpage": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-fpvcarwebpage-webpage-63023-authRole",
+      "UnauthRoleArn": "arn:aws:iam::614103748137:role/amplify-fpvcarwebpage-webpage-63023-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::614103748137:role/amplify-fpvcarwebpage-webpage-63023-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-fpvcarwebpage-webpage-63023-deployment",
+      "UnauthRoleName": "amplify-fpvcarwebpage-webpage-63023-unauthRole",
+      "StackName": "amplify-fpvcarwebpage-webpage-63023",
+      "StackId": "arn:aws:cloudformation:us-east-2:614103748137:stack/amplify-fpvcarwebpage-webpage-63023/dca7b200-72a5-11eb-8d63-064a3d3b91ae",
+      "AmplifyAppId": "dq7482j7vs7v5"
+    },
+    "categories": {
+      "auth": {
+        "fpvcarwebpagec05f98ca": {}
       }
     }
   }
