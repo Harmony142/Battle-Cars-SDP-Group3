@@ -20,6 +20,7 @@ cd pybluez
 """
 client, shard_iterator = connect_to_database()
 
+# TODO check if relative imports are going to work properly or if they will bug out when running hub.py
 # TODO test if updates only happen on state change
 # TODO test if boost bug is fixed
 # TODO test if WASD bug is fixed
