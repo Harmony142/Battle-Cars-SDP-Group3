@@ -1,8 +1,6 @@
 import bluetooth
 from time import sleep
 import keyboard
-import boto3
-import csv
 from .hub_common import connect_to_database, read_keyboard_commands, read_controller_commands, read_database_commands
 
 """

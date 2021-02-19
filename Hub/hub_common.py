@@ -2,6 +2,8 @@
 import keyboard
 from inputs import devices
 import json
+import boto3
+import csv
 
 
 def connect_to_database():
