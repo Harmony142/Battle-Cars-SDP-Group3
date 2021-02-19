@@ -14,7 +14,7 @@ const allowed_keys = Object.keys(curr_keysPressed);
 
 document.addEventListener('keydown', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = true;}});
 document.addEventListener('keyup', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = false;}});
-document.addEventListener('unhandledrejection', e -> {API.graphql({ query: updateTodo, variables: { input: formData } });});
+document.addEventListener('unhandledrejection', e => {API.graphql({ query: updateTodo, variables: { input: formData } });});
 
 document.body.style.overflow = "hidden";
 
