@@ -2,7 +2,7 @@ import React from "react";
 import "./ChatRoom.css";
 import Space from './space.jpg';
 import { API } from 'aws-amplify';
-import { updateTodo } from '../graphql/mutations';
+import { createTodo, updateTodo } from '../graphql/mutations';
 
 // updateTodo
 const prev_keysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
@@ -32,7 +32,7 @@ const ChatRoom = (props) => {
     var d = new Date();
     payload['StartTime'] = d.getTime();
     formData.description = JSON.stringify(payload);
-    API.graphql({ query: updateTodo, variables: { input: formData } });
+    API.graphql({ query: createTodo, variables: { input: formData } });
     console.log(formData);
   }
 
