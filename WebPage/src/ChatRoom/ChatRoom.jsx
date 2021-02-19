@@ -32,8 +32,13 @@ const ChatRoom = (props) => {
     var d = new Date();
     payload['StartTime'] = d.getTime();
     formData.description = JSON.stringify(payload);
-    API.graphql({ query: createTodo, variables: { input: formData } });
-    console.log("creating entry");
+    try {
+        API.graphql({ query: createTodo, variables: { input: formData } });
+        console.log("created first entry");
+    }
+    catch(err) {
+        API.graphql({ query: updateTodo, variables: { input: formData } });
+    }
     console.log(formData);
   }
 
