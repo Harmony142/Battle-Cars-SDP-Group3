@@ -1,4 +1,5 @@
 
+import bluetooth
 import keyboard
 from inputs import devices
 import json
@@ -54,6 +55,63 @@ def connect_to_database():
     print('Shard iterator: ', shard_iterator)
 
     return client, shard_iterator
+
+
+def connect_to_bluetooth(target, port=None):
+    # Check input class
+    if target.__class__ is not str:
+        raise TypeError('Target must be string of device name or MAC address')
+
+    # Check if the target fits the format of a MAC address
+    target_address = None
+    check = target.split(':')
+    if len(check) == 6 and all(len(key) == 2 for key in check):
+        print('MAC address detected')
+        target_address = target
+
+    # Connect to our bluetooth module if we found it
+    # Search for bluetooth device if address is not provided
+    if target_address is None:
+        # Scan for nearby devices
+        print('Scanning for nearby devices...')
+        nearby_devices = bluetooth.discover_devices()
+
+        # Try and find our bluetooth module
+        print('Searching for our bluetooth module...')
+        for bluetooth_device_address in nearby_devices:
+            print(bluetooth.lookup_name(bluetooth_device_address))
+            if target == bluetooth.lookup_name(bluetooth_device_address):
+                target_address = bluetooth_device_address
+                break
+
+        # Check we found our target
+        if target_address is None:
+            print('Failed to find target bluetooth device nearby')
+            return None
+
+        print('Found target bluetooth device with address', target_address)
+
+    print('Attempting to connect')
+    sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+    # TODO make this not need to search over range of ports
+    # TODO make this set the device address
+    # Loop over ports until we find one that works (kinda hacky but it works)
+    # Only check the port provided if it is given
+    max_port = port if port is not None else 3
+    port = port if port is not None else 0
+    for port in range(port, max_port + 1):
+        print('Checking Port', port)
+        try:
+            sock.connect((target_address, port))
+            break
+        except OSError as e:
+            # OSError when failing to connect, skip and go to next port unless we've run out of ports in the range
+            if port == max_port:
+                print('Failed to connect')
+                return None
+
+    print('Connected to {} at {}:{}'.format(target, target_address, port))
+    return sock
 
 
 def read_keyboard_commands():
