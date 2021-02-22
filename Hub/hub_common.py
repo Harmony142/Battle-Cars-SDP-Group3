@@ -9,7 +9,7 @@ import csv
 def connect_to_database():
     # Variables for connecting to the database for streaming commands from the web page
     # TODO make this robust it just connects once when you launch hub.py
-    table_name = 'Todo-fkgtez5rpfcoferxahyyjer5i4-dev'
+    table_name = 'Todo-tkqiyw7abzbm3iilppwpgk3grm-main'
     credentials_csv_file_name = 'dynamodb-stream-readonly-creds.csv'
 
     with open(credentials_csv_file_name, newline='') as csvfile:
@@ -41,7 +41,7 @@ def connect_to_database():
     response = client.describe_stream(
         StreamArn=stream_arn
     )
-    shard_id = response['StreamDescription']['Shards'][-3]['ShardId']
+    shard_id = response['StreamDescription']['Shards'][-1]['ShardId']
 
     # Get the first shard iterator of the latest shard
     response = client.get_shard_iterator(

@@ -75,7 +75,7 @@ while True:
                     sock.connect((target_address, port))
                     break
                 except Exception as e:  # TODO figure out what type of exception sock raises
-                    pass
+                    print(e)
 
             # Retry connection if we failed to connect
             if port > max_port:
