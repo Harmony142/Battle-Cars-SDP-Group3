@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "rtcpeerconnection": "^8.4.0",
+    "websocket": "^1.0.33",
+    "ws": "^7.4.3",
     "xmlhttprequest": "^1.8.0"
   }
 }
