@@ -62,21 +62,27 @@ def connect_to_bluetooth(target):
     Connects to a target bluetooth device via MAC address if available or by searching for device name
 
     :param target:  list with structure [device name, MAC address, socket]
+    :raises ValueError: if target structure is invalid or useless, requires user intervention
+    :raises ConnectionError: if we fail to connect to the target, should not require user intervention
     """
+
+    # Check that input is useful
+    if target[0] is None and target[1] is None:
+        raise ValueError('No connection information')
 
     # Check input class of device name
     if target[0] is not None and target[0].__class__ is not str:
-        raise TypeError('Target must be string or None')
+        raise ValueError('Target must be string or None')
 
     # Check input class of MAC address
     if target[1] is not None and target[1].__class__ is not str:
-        raise TypeError('MAC address must be string or None')
+        raise ValueError('MAC address must be string or None')
 
     # Check if the target fits the format of a MAC address
     if target[1] is not None:
         check = target[1].split(':')
         if len(check) != 6 or not all(len(key) == 2 for key in check):
-            raise TypeError('Invalid MAC address')
+            raise ValueError('Invalid MAC address')
 
     # Search for bluetooth device if MAC address is not provided
     if target[1] is None:
@@ -94,7 +100,7 @@ def connect_to_bluetooth(target):
 
         # Check we found our target
         if target[1] is None:
-            raise KeyError('Failed to find target bluetooth device nearby')
+            raise ConnectionError('Failed to find target bluetooth device nearby')
 
         print('Found target bluetooth device', target[0], 'with address', target[1])
 
