@@ -57,21 +57,29 @@ def connect_to_database():
     return client, shard_iterator
 
 
-def connect_to_bluetooth(target, port=None):
-    # Check input class
-    if target.__class__ is not str:
-        raise TypeError('Target must be string of device name or MAC address')
+def connect_to_bluetooth(target):
+    """
+    Connects to a target bluetooth device via MAC address if available or by searching for device name
+
+    :param target:  list with structure [device name, MAC address, socket]
+    """
+
+    # Check input class of device name
+    if target[0] is not None and target[0].__class__ is not str:
+        raise TypeError('Target must be string or None')
+
+    # Check input class of MAC address
+    if target[1] is not None and target[1].__class__ is not str:
+        raise TypeError('MAC address must be string or None')
 
     # Check if the target fits the format of a MAC address
-    target_address = None
-    check = target.split(':')
-    if len(check) == 6 and all(len(key) == 2 for key in check):
-        print('MAC address detected')
-        target_address = target
+    if target[1] is not None:
+        check = target[1].split(':')
+        if len(check) != 6 or not all(len(key) == 2 for key in check):
+            raise TypeError('Invalid MAC address')
 
-    # Connect to our bluetooth module if we found it
-    # Search for bluetooth device if address is not provided
-    if target_address is None:
+    # Search for bluetooth device if MAC address is not provided
+    if target[1] is None:
         # Scan for nearby devices
         print('Scanning for nearby devices...')
         nearby_devices = bluetooth.discover_devices()
@@ -80,48 +88,36 @@ def connect_to_bluetooth(target, port=None):
         print('Searching for our bluetooth module...')
         for bluetooth_device_address in nearby_devices:
             print(bluetooth.lookup_name(bluetooth_device_address))
-            if target == bluetooth.lookup_name(bluetooth_device_address):
-                target_address = bluetooth_device_address
+            if bluetooth.lookup_name(bluetooth_device_address) == target[0]:
+                target[1] = bluetooth_device_address
                 break
 
         # Check we found our target
-        if target_address is None:
-            print('Failed to find target bluetooth device nearby')
-            return None
+        if target[1] is None:
+            raise KeyError('Failed to find target bluetooth device nearby')
 
-        print('Found target bluetooth device with address', target_address)
+        print('Found target bluetooth device', target[0], 'with address', target[1])
 
-    print('Attempting to connect')
+    port = 1
+    print('Attempting to connect on port', port)
     sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-    # TODO make this not need to search over range of ports
-    # TODO make this set the device address
-    # Loop over ports until we find one that works (kinda hacky but it works)
-    # Only check the port provided if it is given
-    max_port = port if port is not None else 3
-    port = port if port is not None else 0
-    for port in range(port, max_port + 1):
-        print('Checking Port', port)
-        try:
-            sock.connect((target_address, port))
-            break
-        except OSError as e:
-            # OSError when failing to connect, skip and go to next port unless we've run out of ports in the range
-            if port == max_port:
-                print('Failed to connect')
-                return None
+    try:
+        sock.connect((target[1], port))
+    except OSError as e:
+        # OSError when failing to connect, skip and go to next port unless we've run out of ports in the range
+        raise ConnectionError('Failed to connect')
 
-    print('Connected to {} at {}:{}'.format(target, target_address, port))
-    return sock
+    print('Connected to {} at {}:{}'.format(target[0], target[1], port))
+    target[2] = sock
 
 
 def read_keyboard_commands():
     """
     Bit Positions
     76543210
-    0: Y pressed
-    1: B pressed
-    2: A pressed
-    3: X pressed
+    0-1: Car Number
+    2: Unused currently
+    3: Boost Enabled
     4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
     6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
     """
@@ -136,7 +132,7 @@ def read_keyboard_commands():
         cmd_flags |= 1 << 7
 
     if keyboard.is_pressed('shift'):
-        cmd_flags |= 0b1111
+        cmd_flags |= 1 << 3
 
     return cmd_flags
 
