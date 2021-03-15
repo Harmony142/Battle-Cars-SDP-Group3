@@ -1910,7 +1910,9 @@ input::-moz-focus-inner {
   width: 100%;
   height: 100vh;
   min-height: 792px;
-  background-color: #050505;
+  background-image: url(../images/Umass_Amherst.jpg);
+  background-repeat:   no-repeat;
+  background-position: center center;              /* optional, center the image */
 }
 
 .intro-content {
@@ -1924,38 +1926,38 @@ input::-moz-focus-inner {
 }
 
 .intro-pic {
-  background-color: #02182c;
+  /* background-color: #02182c;
   background-repeat: no-repeat;
   background-position: top center;
-  background-image: url(../images/hero-pic.jpg);
+  background-image: url(../images/portfolio/Peter.png);
   background-size: cover;
   position: absolute;
-  top: 20%;
-  right: 0;
+  top: 80%;
+  right: 0%;
   bottom: 0;
-  left: 50%;
+  left: 80%; */
 }
 
 .intro-pic::before {
-  content: "";
+  /* content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background-color: #000000;
-  opacity: .2;
+  opacity: .2; */
 }
 
 .intro-grid {
-  background-image: url(../images/pattern-dot-grid.svg);
+  /* background-image: url(../images/pattern-dot-grid.svg);
   background-size: 24px 24px;
   opacity: .15;
   position: absolute;
   top: 30%;
   right: 0;
   bottom: 0;
-  left: 30%;
+  left: 30%; */
 }
 
 .intro-text {
@@ -1978,7 +1980,7 @@ input::-moz-focus-inner {
   font-size: 7.8rem;
   font-weight: 500;
   line-height: 1.179;
-  color: #ffffff;
+  color: #2c49ec;
   margin-top: 0;
 }
 
