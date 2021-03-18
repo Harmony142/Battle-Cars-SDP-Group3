@@ -34,8 +34,8 @@ const ChatRoom = (props) => {
     payload['StartTime'] = d.getTime();
     formData.description = JSON.stringify(payload);
     console.log(formData);
-    //API.graphql({ query: createTodo, variables: { input: formData } })
-    //    .catch(e => {API.graphql({ query: updateTodo, variables: { input: formData } });});
+    API.graphql({ query: createTodo, variables: { input: formData } })
+        .catch(e => {API.graphql({ query: updateTodo, variables: { input: formData } });});
   }
 
   const handleNewMessageChange = (event) => {
