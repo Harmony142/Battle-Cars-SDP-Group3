@@ -12,7 +12,7 @@ const formData = {id: 1234, name: "hello", description: ""};
 const allowed_keys = Object.keys(curr_keysPressed);
 // console.log(JSON.stringify(allowed_keys));
 
-//const process = require('process')
+const process = require('process')
 var AWS = require('aws-sdk');
 var sqs = new AWS.SQS({
     accessKeyId: 'AKIAY563PRYUWD457KGQ',
@@ -52,8 +52,8 @@ const ChatRoom = (props) => {
       MessageDeduplicationId: uuidv4(),  // Required for FIFO queues
       MessageGroupId: "car-1",  // Required for FIFO queues
       MessageBody: JSON.stringify(payload),
-      //QueueUrl: process.env.SQS_URL
-      QueueUrl: "https://sqs.us-east-2.amazonaws.com/614103748137/user-commands.fifo"
+      QueueUrl: process.env.SQS_URL
+      //QueueUrl: "https://sqs.us-east-2.amazonaws.com/614103748137/user-commands.fifo"
     }
     sqs.sendMessage(params, function(err, data) {
       if (err) {
