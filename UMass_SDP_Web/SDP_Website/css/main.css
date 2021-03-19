@@ -889,6 +889,8 @@ button.btn--stroke {
   background: transparent !important;
   border: 0.2rem solid #000000;
   color: #000000;
+  display: inline;
+  padding: 20px;
 }
 
 .btn--stroke:hover,
@@ -1976,6 +1978,9 @@ input::-moz-focus-inner {
   line-height: 1.333;
   color: #000000;
   margin-top: 0;
+  -webkit-text-fill-color: white; /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
 }
 
 .intro-text h1 {
