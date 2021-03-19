@@ -14,10 +14,7 @@ const allowed_keys = Object.keys(curr_keysPressed);
 
 const process = require('process')
 var AWS = require('aws-sdk');
-var sqs = new AWS.SQS({
-    accessKeyId: 'AKIAY563PRYUWD457KGQ',
-    secretAccessKey: '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'
-});
+var sqs = new AWS.SQS();
 
 document.addEventListener('keydown', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = true;}});
 document.addEventListener('keyup', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = false;}});
