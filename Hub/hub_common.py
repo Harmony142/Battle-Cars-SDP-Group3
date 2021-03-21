@@ -5,9 +5,12 @@ from inputs import devices
 import json
 import boto3
 import csv
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 
 
 def connect_to_database():
+    # API Docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodbstreams.html
     # Variables for connecting to the database for streaming commands from the web page
     # TODO make this robust it just connects once when you launch hub.py
     table_name = 'Todo-tkqiyw7abzbm3iilppwpgk3grm-main'
@@ -38,23 +41,32 @@ def connect_to_database():
         raise ValueError('Table name {} not found in current account or no streams available'.format(table_name))
     print('Found stream: ', stream_arn)
 
-    # Get the latest shard
+    # Get the latest shards
     response = client.describe_stream(
-        StreamArn=stream_arn
-    )
-    shard_id = response['StreamDescription']['Shards'][-1]['ShardId']
-
-    # Get the first shard iterator of the latest shard
-    response = client.get_shard_iterator(
         StreamArn=stream_arn,
-        ShardId=shard_id,
-        ShardIteratorType='LATEST',
     )
-    # pp.pprint(response['ShardIterator'])
-    shard_iterator = response['ShardIterator']
-    print('Shard iterator: ', shard_iterator)
 
-    return client, shard_iterator
+    pp.pprint(response)
+
+    shard_ids = []
+    print(len(response['StreamDescription']['Shards']))
+    for shard in response['StreamDescription']['Shards']:
+        # Only add the open shards to the list, open shards don't have an ending sequence number
+        if 'SequenceNumberRange' in shard.keys() and 'EndingSequenceNumber' not in shard['SequenceNumberRange'].keys():
+            shard_ids.append(shard['ShardId'])
+
+    # Get the shard iterators for the latest shards
+    shard_iterators = []
+    for shard_id in shard_ids:
+        response = client.get_shard_iterator(
+            StreamArn=stream_arn,
+            ShardId=shard_id,
+            ShardIteratorType='LATEST',
+        )
+        shard_iterators.append(response['ShardIterator'])
+        print('Shard iterator: ', response['ShardIterator'])
+
+    return client, shard_iterators
 
 
 def connect_to_bluetooth(target):
