@@ -1,8 +1,8 @@
 
 import keyboard
-from boto3 import client.
-from hub_common import connect_to_database, connect_to_bluetooth,\
-    read_keyboard_commands, read_controller_commands, read_database_commands
+from boto3 import client
+from hub_common import connect_to_bluetooth,\
+    read_keyboard_commands, read_controller_commands, initialize_ports
 
 """
 ----- TO INSTALL PYBLUEZ ON WINDOWS -----
@@ -19,7 +19,7 @@ git clone https://github.com/pybluez/pybluez
 cd pybluez
 <conda env file>/python.exe setup.py install
 """
-client, shard_iterators = connect_to_database()
+# client, shard_iterators = connect_to_database()
 
 # TODO test if updates only happen on state change
 # TODO test if boost bug is fixed
@@ -32,8 +32,8 @@ client, shard_iterators = connect_to_database()
 
 # List of cars in the format [device name, MAC address, socket]
 targets = [
-    ['HC-05', None, None],
-    ['HC-06', None, None]
+    # ['HC-05', None, None],
+    ['HC-06', '20:20:03:19:06:58', None]
 ]
 
 """
@@ -54,7 +54,23 @@ keyboard_override = False
 swap_receiver_hot_key = 'r'
 swap_receiver = False
 #
+
+# Score keeping setup
+ports = initialize_ports()
+score_blue, score_red = 0, 0
+
 while True:
+    # Check if a goal is trying to send us a score
+    for port in ports:
+        if port.in_waiting:
+            line = port.readline().decode('utf-8').strip()
+            if line == 'GOAL BLUE':
+                score_blue += 1
+                print('GOAL BLUE', score_blue)
+            elif line == 'GOAL RED':
+                score_red += 1
+                print('GOAL RED', score_blue)
+
     try:
         # Toggle for keyboard override. If you want to control from the hub directly
         if keyboard.is_pressed(keyboard_override_hot_key):
@@ -82,8 +98,8 @@ while True:
         except IndexError:
             # Read keyboard commands since we couldn't find a controller
             source_string = 'Database'
-            command_flags, shard_iterator =\
-                read_database_commands(client, shard_iterator, previous_command_flags)
+            # command_flags, shard_iterators =\
+            #     read_database_commands(client, shard_iterators, previous_command_flags)
             if keyboard_override:
                 source_string = 'Keyboard'
                 command_flags = read_keyboard_commands()
@@ -117,5 +133,6 @@ while True:
                     except ConnectionError as e:
                         print(e)
             previous_command_flags = command_flags
-    except ExpiredIteratorException:
-        client, shard_iterators = connect_to_database()
+    except Exception(e):
+        print(e)
+        # client, shard_iterators = connect_to_database()

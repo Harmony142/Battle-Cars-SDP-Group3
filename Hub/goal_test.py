@@ -22,9 +22,10 @@ import sys
 import glob
 import serial
 
-#taken from https://stackoverflow.com/questions/12090503/listing-available-com-ports-with-python
+
 def serial_ports():
     """ Lists serial port names
+        taken from https://stackoverflow.com/questions/12090503/listing-available-com-ports-with-py
 
         :raises EnvironmentError:
             On unsupported or unknown platforms
