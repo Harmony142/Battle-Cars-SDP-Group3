@@ -64,12 +64,10 @@ while True:
     for port in ports:
         if port.in_waiting:
             line = port.readline().decode('utf-8').strip()
-            if line == 'GOAL BLUE':
-                score_blue += 1
-                print('GOAL BLUE', score_blue)
-            elif line == 'GOAL RED':
-                score_red += 1
-                print('GOAL RED', score_blue)
+            for team in ['RED', 'BLUE']:
+                if line == 'GOAL ' + team:
+                    globals()['score_' + team.lower()] += 1
+                    print('GOAL', team, score_blue)
 
     try:
         # Toggle for keyboard override. If you want to control from the hub directly
