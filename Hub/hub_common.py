@@ -1,4 +1,5 @@
 
+import datetime
 import sys
 import glob
 import serial
@@ -12,64 +13,61 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 
-def connect_to_database():
-    # API Docs: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodbstreams.html
-    # Variables for connecting to the database for streaming commands from the web page
-    # TODO make this robust it just connects once when you launch hub.py
-    table_name = 'Todo-tkqiyw7abzbm3iilppwpgk3grm-main'
-    credentials_csv_file_name = 'dynamodb-stream-readonly-creds.csv'
+def initialize_sqs_client():
+    # Variables for connecting to the sqs queue holding user commands
+    credentials_csv_file_name = 'sqs-read-delete-creds.csv'
 
     with open(credentials_csv_file_name, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         credentials = next(reader)
 
-    # Connect to AWS DynamoDB API
+    # Connect to AWS SQS
     client = boto3.client(
-        service_name='dynamodbstreams',
+        service_name='sqs',
         region_name='us-east-2',
         aws_access_key_id=credentials['Access key ID'],
         aws_secret_access_key=credentials['Secret access key'])
+    return client
 
-    # Find the correct stream ARN
-    print('Attempting to connect to table: ', table_name)
-    response = client.list_streams(
-        TableName=table_name
-    )
-    stream_arn = None
-    for stream in response['Streams']:
-        if stream['TableName'] == table_name:
-            stream_arn = stream['StreamArn']
-            break
-    if stream_arn is None:
-        raise ValueError('Table name {} not found in current account or no streams available'.format(table_name))
-    print('Found stream: ', stream_arn)
 
-    # Get the latest shards
-    response = client.describe_stream(
-        StreamArn=stream_arn,
+def read_from_sqs(client):
+    queue_url = 'https://sqs.us-east-2.amazonaws.com/614103748137/user-commands.fifo'
+
+    response = client.receive_message(
+        QueueUrl=queue_url,
+        MaxNumberOfMessages=1,
+        WaitTimeSeconds=1
     )
 
-    pp.pprint(response)
+    if 'Messages' in response.keys():
+        payload = json.loads(response['Messages'][0]['Body'])
 
-    shard_ids = []
-    print(len(response['StreamDescription']['Shards']))
-    for shard in response['StreamDescription']['Shards']:
-        # Only add the open shards to the list, open shards don't have an ending sequence number
-        if 'SequenceNumberRange' in shard.keys() and 'EndingSequenceNumber' not in shard['SequenceNumberRange'].keys():
-            shard_ids.append(shard['ShardId'])
+        current_time = datetime.datetime.now().timestamp() * 1000
+        print('Website command to retrieval:', current_time - payload['StartTime'], 'ms')
 
-    # Get the shard iterators for the latest shards
-    shard_iterators = []
-    for shard_id in shard_ids:
-        response = client.get_shard_iterator(
-            StreamArn=stream_arn,
-            ShardId=shard_id,
-            ShardIteratorType='LATEST',
-        )
-        shard_iterators.append(response['ShardIterator'])
-        print('Shard iterator: ', response['ShardIterator'])
+        """
+        Bit Positions
+        76543210
+        0-1: Car Number
+        2: Unused currently
+        3: Boost Enabled
+        4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
+        6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
+        """
+        cmd_flags = 0x00
+        if bool(payload['KeyS']):
+            cmd_flags |= 1 << 4
+        if bool(payload['KeyW']):
+            cmd_flags |= 1 << 5
+        if bool(payload['KeyA']):
+            cmd_flags |= 1 << 6
+        if bool(payload['KeyD']):
+            cmd_flags |= 1 << 7
 
-    return client, shard_iterators
+        if bool(payload['ShiftLeft']):
+            cmd_flags |= 1 << 3
+
+        return cmd_flags
 
 
 def initialize_ports():
@@ -241,6 +239,7 @@ def read_controller_commands():
     return cmd_flags
 
 
+'''
 def read_database_commands(cl, it, previous_command_flags):
     """
     Bit Positions
@@ -280,3 +279,4 @@ def read_database_commands(cl, it, previous_command_flags):
         cmd_flags = previous_command_flags
 
     return cmd_flags, it
+'''
