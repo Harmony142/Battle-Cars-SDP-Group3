@@ -32,7 +32,6 @@ sqs_client = initialize_sqs_client()
 
 # List of cars in the format [device name, MAC address, socket]
 targets = [
-    # ['HC-05', None, None],
     ['HC-06', '20:20:03:19:06:58', None]
 ]
 
@@ -42,13 +41,13 @@ targets = [
     ['HC-06', '20:20:03:19:06:47', None]
 ]
 """
-
+#20:20:03:19:06:58
 # TODO update the command flags scheme to allow customization
 # Try reconnecting if it fails to connect or the connection is lost
 previous_command_flags = 0x00
 
 keyboard_override_hot_key = 't'
-keyboard_override = False
+keyboard_override = True
 
 # TODO this is temporary remove this when implementing the final version
 swap_receiver_hot_key = 'r'
@@ -99,8 +98,9 @@ while True:
             source_string = 'Keyboard'
             command_flags = read_keyboard_commands()
         else:
-            source_string = 'Database'
+            source_string = 'SQS'
             command_flags = read_from_sqs(sqs_client)
+            command_flags = command_flags if command_flags is not None else previous_command_flags
 
     # TODO this is temporary remove this when implementing the final version
     command_flags |= 0b01 if swap_receiver else 0b00
@@ -118,11 +118,11 @@ while True:
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
         """
 
-        print('Sending {0:#010b} from {1}'.format(command_flags, source_string))
         for target in targets:
             try:
                 if target[2] is None:
                     raise OSError('Socket does not exist')
+                print('Sending {0:#010b} from {1}'.format(command_flags, source_string))
                 target[2].send(command_flags.to_bytes(1, "little"))
             except OSError:
                 print('Disconnected from {}, attempting to reconnect'.format(target[0]))

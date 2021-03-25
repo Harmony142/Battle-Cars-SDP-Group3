@@ -67,7 +67,7 @@ def read_from_sqs(client):
         if bool(payload['ShiftLeft']):
             cmd_flags |= 1 << 3
 
-        return cmd_flags
+        return cmd_flags, payload['StartTime']
 
 
 def initialize_ports():
