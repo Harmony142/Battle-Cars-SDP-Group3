@@ -1,21 +1,42 @@
-.room-name {
+
+.red-half {
+    background-image: linear-gradient(to bottom right, lightcoral, firebrick);
     position: absolute;
-    margin-top: 0;
-    color: white;
+    width: 50%;
+    top: 0%;
+    bottom: 0%;
+    left: 0%;
+    border-style: solid;
+    border-color: black;
+    margin: 0px;
+}
+
+.blue-half {
+    background-image: linear-gradient(to bottom left, paleturquoise, dodgerblue);
+    position: absolute;
+    width: 50%;
+    top: 0%;
+    bottom: 0%;
+    right: 0%;
+    border-style: solid;
+    border-color: black;
+    margin: 0px;
+}
+
+.main-window {
+    position: absolute;
+    margin: 0px;
+    width: 100%;
+    top: 0px;
+    bottom: 105px;
 }
 
 .room-video {
     position: absolute;
-    color: white;
-    /* align-content: middle; */
-    width: 100%;
-    height: 100%;
-}
-
-.room-page {
-    position: absolute;
-    height: 100%;
-    width: 100%;
+    left: 2%;
+    top: 2%;
+    height: 97%;
+    width: 96%;
 }
 
 .new-message-input-field {
@@ -24,4 +45,95 @@
     height: 100%;
     width: 100%;
     opacity: 0%;
+}
+
+.bottom-bar {
+    position: absolute;
+    margin: 0px;
+    width: 100%;
+    height: 96px;
+    bottom: 0px;
+}
+
+.left-bar {
+    position: absolute;
+    margin: 0px;
+    height: 100%;
+    width: 50%;
+    left: 0px;
+}
+
+.right-bar {
+    position: absolute;
+    margin: 0px;
+    height: 100%;
+    width: 50%;
+    right: 0px;
+}
+
+.score-red {
+    font-size: 70px;
+    position: absolute;
+    right: 20px;
+    bottom: 0px;
+    margin: 0px;
+}
+
+.score-blue {
+    font-size: 70px;
+    position: absolute;
+    left: 10px;
+    bottom: 0px;
+    margin: 0px;
+}
+
+.controls-wrapper {
+    position: absolute;
+    margin: 0px;
+    height: 96px;
+    width: 300px;
+    bottom: 4px;
+    right: 10px;
+}
+
+.wasd-wrapper {
+    position: absolute;
+    margin: 0px;
+    height: 100%;
+    width: 150px;
+    right: 0px;
+}
+
+.key {
+    position: absolute;
+    margin: 0px;
+    height: 35px;
+    width: 35px;
+
+    text-align: center;
+    line-height: 34px;
+
+    background-color: lightgrey;
+    border-style: outset;
+    border-color: grey;
+    border-width: 5px;
+    border-radius: 5px;
+}
+
+.shift-key {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    margin: 0px;
+    height: 35px;
+    width: 105px;
+
+    text-align: center;
+    line-height: 34px;
+
+    background-color: lightgrey;
+    border-style: outset;
+    border-color: grey;
+    border-width: 5px;
+    border-radius: 5px;
 }

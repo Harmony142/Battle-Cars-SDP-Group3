@@ -37,12 +37,23 @@ const ChatRoom = (props) => {
 
   const handleKeyPress = (event) => {
     if(JSON.stringify(prev_keysPressed) !== JSON.stringify(curr_keysPressed)){
-      createNote();
+      allowed_keys.forEach(key => {
+        var keyStyle = document.getElementById(key).style;
+        if(curr_keysPressed[key]) {
+            keyStyle.borderStyle = 'inset';
+            keyStyle.backgroundColor = '#ffff80';
+        } else {
+            keyStyle.borderStyle = 'outset';
+            keyStyle.backgroundColor = 'lightgrey';
+        }
+
+      });
+      pushToSQS();
       allowed_keys.forEach(key => prev_keysPressed[key] = curr_keysPressed[key]);
     }
   }
 
-  async function createNote() {
+  async function pushToSQS() {
     const payload = JSON.parse(JSON.stringify(curr_keysPressed));
     var d = new Date();
     payload['StartTime'] = d.getTime();
@@ -66,21 +77,32 @@ const ChatRoom = (props) => {
     //    .catch(e => {API.graphql({ query: updateTodo, variables: { input: formData } });});
   }
 
-  const handleNewMessageChange = (event) => {
-  };
-
-
   return (
-    <div  onKeyUp={handleKeyPress} onKeyDown={handleKeyPress}>
-      <img className="room-page" src={Space} alt=''/>
-      <iframe src="https://viewer.millicast.com/v2?streamId=hrFywT/kgplc3ye" allowFullScreen className="room-video"></iframe>
-      {/* <h1 className="room-name">Name: {roomId}</h1> */}
-      <textarea
-        value={newMessage}
-        onChange={handleNewMessageChange}
-        className="new-message-input-field"
-      />
-      <CustomizationMenu/>
+    <div onKeyUp={handleKeyPress} onKeyDown={handleKeyPress}>
+      <div className="red-half"/>
+      <div className="blue-half"/>
+      <div className="main-window">
+        <iframe src="https://viewer.millicast.com/v2?streamId=hrFywT/kgplc3ye" allowFullScreen className="room-video"/>
+      </div>
+      <div className="bottom-bar">
+        <div className="left-bar">
+          <CustomizationMenu/>
+          <h1 className="score-red">1</h1>
+        </div>
+        <div className="right-bar">
+          <h1 className="score-blue">0</h1>
+          <div className="controls-wrapper">
+            <div className="wasd-wrapper">
+              <h1 className="key" id="KeyW" style={{top: '0px', left: '53px'}}>W</h1>
+              <h1 className="key" id="KeyA" style={{bottom: '0px', left: '0px'}}>A</h1>
+              <h1 className="key" id="KeyS" style={{bottom: '0px', left: '53px'}}>S</h1>
+              <h1 className="key" id="KeyD" style={{bottom: '0px', right: '0px'}}>D</h1>
+            </div>
+            <h1 className="shift-key" id="ShiftLeft">LShift</h1>
+          </div>
+        </div>
+      </div>
+      <textarea className="new-message-input-field"/>
     </div>
   );
 };

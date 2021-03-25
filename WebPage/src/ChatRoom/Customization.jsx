@@ -13,11 +13,15 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(2),
   },
   formControl: {
+    zIndex: 1,
+    position: 'absolute',
+    bottom: '8px',
+    left: '10px',
     margin: theme.spacing(1),
     minWidth: 120
   },
   menuItem: {
-    color: 'white'
+    color: 'black'
   }
 }));
 
