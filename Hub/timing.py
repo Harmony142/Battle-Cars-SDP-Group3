@@ -32,15 +32,11 @@ while True:
     except IndexError:
         # Read keyboard commands since we couldn't find a controller
         source_string = 'SQS'
-        payload = read_from_sqs(sqs_client)
+        command_flags, start_time = read_from_sqs(sqs_client)
         sqs_read_time = datetime.datetime.now().timestamp() * 1000
-        if payload is not None:
-            command_flags, start_time = payload
-        else:
-            command_flags = previous_command_flags
 
     # Send the data over bluetooth if the state has changed
-    if command_flags != previous_command_flags:
+    if command_flags is not None and command_flags != previous_command_flags:
         """
         Bit Positions
         76543210
@@ -64,7 +60,7 @@ while True:
                     for port in ports:
                         if port.in_waiting:
                             line = port.readline().decode('utf-8').strip()
-                            if line == 'Message Recieved':
+                            if line == 'Message Received':
                                 message_received = line
 
                 current_time = datetime.datetime.now().timestamp() * 1000

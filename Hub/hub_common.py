@@ -69,6 +69,7 @@ def read_from_sqs(client):
 
         return cmd_flags, payload['StartTime']
 
+    return None, None
 
 def initialize_ports():
     """ Lists serial port names
