@@ -9,13 +9,10 @@ sqs_client = initialize_sqs_client()
 
 # List of cars in the format [device name, MAC address, socket]
 targets = [
-    # ['HC-05', None, None],
     ['HC-06', '20:20:03:19:06:58', None]
 ]
 
-#20:20:03:19:06:58
-# TODO update the command flags scheme to allow customization
-# Try reconnecting if it fails to connect or the connection is lost
+# 20:20:03:19:06:58
 previous_command_flags = 0x00
 
 # Score keeping setup
@@ -46,13 +43,12 @@ while True:
         4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
         """
-
-        print('Sending {0:#010b} from {1}'.format(command_flags, source_string))
         for target in targets:
             try:
                 if target[2] is None:
                     raise OSError('Socket does not exist')
                 target[2].send(command_flags.to_bytes(1, "little"))
+                print('Sending {0:#010b} from {1}'.format(command_flags, source_string))
 
                 # Wait until PCB responds
                 message_received = None

@@ -48,9 +48,10 @@ const ChatRoom = (props) => {
     payload['StartTime'] = d.getTime();
     formData.description = JSON.stringify(payload);
     console.log(formData);
+    var uuid = uuidv4()
     var params = {
-      MessageDeduplicationId: uuidv4(),  // Required for FIFO queues
-      MessageGroupId: "car-1",  // Required for FIFO queues
+      MessageDeduplicationId: uuid,  // Required for FIFO queues
+      MessageGroupId: uuid,  // Required for FIFO queues
       MessageBody: JSON.stringify(payload),
       QueueUrl: 'https://sqs.us-east-2.amazonaws.com/614103748137/user-commands.fifo'
     }
