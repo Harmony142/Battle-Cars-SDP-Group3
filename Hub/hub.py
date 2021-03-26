@@ -1,7 +1,8 @@
 
+import datetime
 import keyboard
 from hub_common import connect_to_bluetooth, initialize_sqs_client, read_from_sqs,\
-    initialize_dynamodb_client, push_score_to_database, read_keyboard_commands, initialize_ports
+    initialize_dynamodb_client, push_to_database, read_keyboard_commands, initialize_ports
 
 """
 ----- TO INSTALL PYBLUEZ ON WINDOWS -----
@@ -29,10 +30,10 @@ dynamodb_client = initialize_dynamodb_client()
 # TODO test if WASD bug is fixed
 # TODO make boost always available, but you can't steer while it's active
 
-# List of cars in the format [device name, MAC address, socket]
+# List of cars in the format [device name, MAC address, socket, player_name, previous_command_flags]
 # TODO update this to maintain previous_command_flags for each car
 targets = [
-    ['HC-06', '20:20:03:19:06:58', None]
+    ['HC-06', '20:20:03:19:06:58', None, None, 0x00]
 ]
 
 # Car PCB 1: 20:20:03:19:06:58
@@ -48,6 +49,32 @@ ports = []  # initialize_ports() TODO temporary fix until we fix listening on se
 score_red, score_blue = 0, 0
 set_score_hot_key = 'p'
 
+
+# Timing
+game_time = 20  # Minutes
+time_between_updates = datetime.timedelta(seconds=1)
+previous_update_time = datetime.datetime.now()
+end_time = previous_update_time + datetime.timedelta(minutes=game_time)
+
+
+def reset(client):
+    # Get the global variables instead of making new local ones
+    global score_red, score_blue, end_time
+
+    # Reset the score
+    score_red, score_blue = 0, 0
+
+    # Remove players from the cars
+    for target in targets:
+        target[3] = None
+
+    # Reset the timer
+    end_time = datetime.datetime.now() + datetime.timedelta(minutes=game_time)
+
+    # Push everything to the database
+    push_to_database(dynamodb_client, score_red, score_blue, end_time - datetime.datetime.now(), targets)
+
+
 while True:
     # Check if a goal is trying to send us a score
     for port in ports:
@@ -57,14 +84,22 @@ while True:
                 if line == 'GOAL ' + team:
                     globals()['score_' + team.lower()] += 1
                     print('GOAL', team, score_blue)
-                    push_score_to_database(dynamodb_client, score_red, score_blue)
+                    push_to_database(dynamodb_client, score_red, score_blue,
+                                     end_time - datetime.datetime.now(), targets)
+
+    # Update database once a second for timer and car ownership
+    if previous_update_time + time_between_updates < datetime.datetime.now():
+        print('Updating database')
+        previous_update_time = datetime.datetime.now()
+        push_to_database(dynamodb_client, score_red, score_blue,
+                         end_time - previous_update_time, targets)
 
     # TODO make an automated version of this
     if keyboard.is_pressed(set_score_hot_key):
         # Switch toggle and wait until key is not pressed
         print("Resetting Score")
         score_red, score_blue = input('New Red Score: '), input('New Blue Score: ')
-        push_score_to_database(dynamodb_client, score_red, score_blue)
+        push_to_database(dynamodb_client, score_red, score_blue, end_time - datetime.datetime.now(), targets)
         while keyboard.is_pressed(set_score_hot_key):
             pass
 
@@ -82,14 +117,18 @@ while True:
     # Read keyboard commands
     if keyboard_override:
         source_string = 'Keyboard'
+        # Keyboard command only ever controls car 1
         command_flags = read_keyboard_commands()
     else:
         source_string = 'SQS'
-        command_flags = read_from_sqs(sqs_client)
+        command_flags, start_time = read_from_sqs(sqs_client, targets)
         command_flags = command_flags if command_flags is not None else previous_command_flags
 
+    # Determine which car we're sending to
+    car_index = command_flags & 0b11
+
     # Send the data over bluetooth if the state has changed
-    if command_flags != previous_command_flags:
+    if command_flags != targets[car_index][4]:
         """
         Bit Positions
         76543210
@@ -112,4 +151,4 @@ while True:
                     connect_to_bluetooth(target)
                 except ConnectionError as e:
                     print(e)
-        previous_command_flags = command_flags
+        targets[car_index][4] = command_flags

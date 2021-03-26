@@ -11,17 +11,21 @@ const Home = () => {
   };
 
   return (
-    <div className="home-container">
-      <input
-        type="text"
-        placeholder="Name"
-        value={roomName}
-        onChange={handleRoomNameChange}
-        className="text-input-field"
-      />
-      <Link to={`/${roomName}`} className="enter-room-button">
-        Join
-      </Link>
+    <div className="home-window">
+      <div className="red-half"/>
+      <div className="blue-half"/>
+      <div className="input-wrapper">
+          <input
+            type="text"
+            placeholder="Name"
+            value={roomName}
+            onChange={handleRoomNameChange}
+            className="text-input-field"
+          />
+          <Link to={`/${roomName}`} className="enter-room-button">
+            Join
+          </Link>
+      </div>
     </div>
   );
 };

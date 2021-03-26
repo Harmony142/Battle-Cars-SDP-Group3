@@ -87,6 +87,13 @@
     margin: 0px;
 }
 
+.time-left {
+    position: absolute;
+    margin: 0px;
+    left: 150px;
+    bottom: 6px;
+}
+
 .controls-wrapper {
     position: absolute;
     margin: 0px;

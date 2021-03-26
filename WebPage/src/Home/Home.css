@@ -1,3 +1,11 @@
+
+.home-window {
+    position: absolute;
+    margin: 0px;
+    height: 100%;
+    width: 100%;
+}
+
 .home-container {
     position: fixed;
     left: 10%;
@@ -8,9 +16,50 @@
     flex-direction: column;
 }
 
+.red-half {
+    background-image: linear-gradient(to bottom right, lightcoral, firebrick);
+    position: absolute;
+    width: 50%;
+    top: 0%;
+    bottom: 0%;
+    left: 0%;
+    border-style: solid;
+    border-color: black;
+    margin: 0px;
+}
+
+.blue-half {
+    background-image: linear-gradient(to bottom left, paleturquoise, dodgerblue);
+    position: absolute;
+    width: 50%;
+    top: 0%;
+    bottom: 0%;
+    right: 0%;
+    border-style: solid;
+    border-color: black;
+    margin: 0px;
+}
+
+.input-wrapper {
+    position: absolute;
+    height: 60%;
+    width: 79%;
+    left: 9%;
+    margin: 0px;
+    top: 10%;
+}
+
 .text-input-field {
+    position: absolute;
+    margin: 0px;
+    width: 100%;
+    top: 0px;
+
     padding: 24px 12px;
+    border-style: solid;
+    border-color: black;
     border-radius: 7px;
+    border-width: 3px;
     font-size: 24px;
 }
 
@@ -19,13 +68,21 @@
 }
 
 .enter-room-button {
-    margin-top: 20px;
+    position: absolute;
+    margin: 0px;
+    width: 100%;
+    top: 100px;
+
     padding: 24px 12px;
-    font-size: 28px;
+    font-size: 24px;
     background: #31a24c;
     color: white;
     font-weight: 600;
     text-align: center;
     text-decoration: none;
+
+    border-style: solid;
+    border-color: black;
     border-radius: 7px;
+    border-width: 3px;
 }

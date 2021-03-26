@@ -47,12 +47,14 @@ document.interval = setInterval(() => {
           var score_blue = item.score_blue.N;
           document.getElementById('score-red').innerHTML = score_red;
           document.getElementById('score-blue').innerHTML = score_blue;
-          console.log("successfully updated score");
+
+          document.getElementById('time-left').innerHTML = item.time_left.S;
+          console.log("successfully updated from database");
         } catch(err) {
-          console.log("error updating score", err);
+          console.log("error updating from database", err);
         }
       }});
-  }, 3000);
+  }, 1000);
 
 document.addEventListener('keydown', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = true;}});
 document.addEventListener('keyup', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = false;}});
@@ -91,6 +93,8 @@ const ChatRoom = (props) => {
   async function pushToSQS() {
     const payload = JSON.parse(JSON.stringify(curr_keysPressed));
     payload['StartTime'] = Date.now();
+    payload['PlayerName'] = 'test';
+    payload['CarNumber'] = 1;
     formData.description = JSON.stringify(payload);
     console.log(formData);
     var uuid = uuidv4()
@@ -121,6 +125,7 @@ const ChatRoom = (props) => {
       <div className="bottom-bar">
         <div className="left-bar">
           <CustomizationMenu/>
+          <h1 className="time-left" id="time-left">20:00</h1>
           <h1 className="score-red" id="score-red">0</h1>
         </div>
         <div className="right-bar">

@@ -29,10 +29,10 @@ def initialize_sqs_client():
         aws_secret_access_key=credentials['Secret access key'])
 
 
-def read_from_sqs(client):
+def read_from_sqs(sqs_client, targets):
     queue_url = 'https://sqs.us-east-2.amazonaws.com/614103748137/user-commands.fifo'
 
-    response = client.receive_message(
+    response = sqs_client.receive_message(
         QueueUrl=queue_url,
         MaxNumberOfMessages=1,
         WaitTimeSeconds=1
@@ -40,10 +40,6 @@ def read_from_sqs(client):
 
     if 'Messages' in response.keys():
         payload = json.loads(response['Messages'][0]['Body'])
-
-        current_time = datetime.datetime.now().timestamp() * 1000
-        print('Website command to retrieval:', current_time - payload['StartTime'], 'ms')
-
         """
         Bit Positions
         76543210
@@ -53,7 +49,16 @@ def read_from_sqs(client):
         4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
         """
-        cmd_flags = 0x00
+        car_index = payload['CarNumber'] - 1
+        player_name = payload['PlayerName']
+
+        # Ignore commands coming from players who do not own this car once it is claimed
+        if targets[car_index][3] is None:
+            targets[car_index][3] = player_name
+        elif targets[car_index][3] != player_name:
+            return None, None
+
+        cmd_flags = 0x00 | car_index
         if bool(payload['KeyS']):
             cmd_flags |= 1 << 4
         if bool(payload['KeyW']):
@@ -86,29 +91,40 @@ def initialize_dynamodb_client():
         aws_secret_access_key=credentials['Secret access key'])
 
 
-def push_score_to_database(client, score_red, score_blue):
+def push_to_database(dynamodb_client, score_red, score_blue, time_left, targets):
     table_name = 'BattleCarsScore'
 
-    client.update_item(
+    attribute_updates = {
+        'score_red': {
+            'Value': {
+                'N': str(score_red)
+            }
+        },
+        'score_blue': {
+            'Value': {
+                'N': str(score_blue)
+            }
+        },
+        'time_left': {
+            'Value': {
+                'S': str.join(':', str(time_left).split('.')[0].split(':')[1:])
+            }
+        }
+    }
+
+    for i, target in enumerate(targets):
+        attribute_updates['car_{}'.format(i + 1)] = {'Value': {'S': target[3] if target[3] is not None else ''}}
+
+    dynamodb_client.update_item(
         TableName=table_name,
         Key={
             'id': {
                 'N': '1'
             }
         },
-        AttributeUpdates={
-            'score_red': {
-                'Value': {
-                    'N': str(score_red)
-                }
-            },
-            'score_blue': {
-                'Value': {
-                    'N': str(score_blue)
-                }
-            }
-        }
+        AttributeUpdates=attribute_updates
     )
+
 
 def initialize_ports():
     """ Lists serial port names
