@@ -22,12 +22,11 @@ def initialize_sqs_client():
         credentials = next(reader)
 
     # Connect to AWS SQS
-    client = boto3.client(
+    return boto3.client(
         service_name='sqs',
         region_name='us-east-2',
         aws_access_key_id=credentials['Access key ID'],
         aws_secret_access_key=credentials['Secret access key'])
-    return client
 
 
 def read_from_sqs(client):
@@ -70,6 +69,46 @@ def read_from_sqs(client):
         return cmd_flags, payload['StartTime']
 
     return None, None
+
+
+def initialize_dynamodb_client():
+    credentials_csv_file_name = 'dynamodb-update-only-creds.csv'
+
+    with open(credentials_csv_file_name, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        credentials = next(reader)
+
+    # Connect to AWS DynamoDB
+    return boto3.client(
+        service_name='dynamodb',
+        region_name='us-east-2',
+        aws_access_key_id=credentials['Access key ID'],
+        aws_secret_access_key=credentials['Secret access key'])
+
+
+def push_score_to_database(client, score_red, score_blue):
+    table_name = 'BattleCarsScore'
+
+    client.update_item(
+        TableName=table_name,
+        Key={
+            'id': {
+                'N': '1'
+            }
+        },
+        AttributeUpdates={
+            'score_red': {
+                'Value': {
+                    'N': str(score_red)
+                }
+            },
+            'score_blue': {
+                'Value': {
+                    'N': str(score_blue)
+                }
+            }
+        }
+    )
 
 def initialize_ports():
     """ Lists serial port names

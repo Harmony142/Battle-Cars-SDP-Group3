@@ -1,7 +1,7 @@
 
 import keyboard
 from hub_common import connect_to_bluetooth, initialize_sqs_client, read_from_sqs,\
-    read_keyboard_commands, read_controller_commands, initialize_ports
+    initialize_dynamodb_client, push_score_to_database, read_keyboard_commands, initialize_ports
 
 """
 ----- TO INSTALL PYBLUEZ ON WINDOWS -----
@@ -21,27 +21,21 @@ cd pybluez
 # Initialize the client for streaming user commands from SQS
 sqs_client = initialize_sqs_client()
 
+# Initialize the client for sending the score back to users
+dynamodb_client = initialize_dynamodb_client()
+
 # TODO test if updates only happen on state change
 # TODO test if boost bug is fixed
 # TODO test if WASD bug is fixed
-# TODO add controls to webpage
-# TODO add score feedback to webpage
-# TODO test if we can control the car with controller if plugged in
-# TODO see if we can connect to HC-05's without passwords disabled, not vital
 # TODO make boost always available, but you can't steer while it's active
 
 # List of cars in the format [device name, MAC address, socket]
+# TODO update this to maintain previous_command_flags for each car
 targets = [
     ['HC-06', '20:20:03:19:06:58', None]
 ]
 
-"""
-targets = [
-    ['HC-05', '98:D3:32:11:0B:77', None],
-    ['HC-06', '20:20:03:19:06:47', None]
-]
-"""
-#20:20:03:19:06:58
+# Car PCB 1: 20:20:03:19:06:58
 # TODO update the command flags scheme to allow customization
 # Try reconnecting if it fails to connect or the connection is lost
 previous_command_flags = 0x00
@@ -49,14 +43,10 @@ previous_command_flags = 0x00
 keyboard_override_hot_key = 't'
 keyboard_override = True
 
-# TODO this is temporary remove this when implementing the final version
-swap_receiver_hot_key = 'r'
-swap_receiver = False
-#
-
 # Score keeping setup
-ports = initialize_ports()
-score_blue, score_red = 0, 0
+ports = []  # initialize_ports() TODO temporary fix until we fix listening on serial killing bluetooth
+score_red, score_blue = 0, 0
+set_score_hot_key = 'p'
 
 while True:
     # Check if a goal is trying to send us a score
@@ -67,6 +57,16 @@ while True:
                 if line == 'GOAL ' + team:
                     globals()['score_' + team.lower()] += 1
                     print('GOAL', team, score_blue)
+                    push_score_to_database(dynamodb_client, score_red, score_blue)
+
+    # TODO make an automated version of this
+    if keyboard.is_pressed(set_score_hot_key):
+        # Switch toggle and wait until key is not pressed
+        print("Resetting Score")
+        score_red, score_blue = input('New Red Score: '), input('New Blue Score: ')
+        push_score_to_database(dynamodb_client, score_red, score_blue)
+        while keyboard.is_pressed(set_score_hot_key):
+            pass
 
     # Toggle for keyboard override. If you want to control from the hub directly
     if keyboard.is_pressed(keyboard_override_hot_key):
@@ -76,35 +76,17 @@ while True:
         while keyboard.is_pressed(keyboard_override_hot_key):
             pass
 
-    # TODO this is temporary remove this when implementing the final version
-    if keyboard.is_pressed(swap_receiver_hot_key):
-        # Switch toggle and wait until key is not pressed
-        swap_receiver = not swap_receiver
-        print("Swapped receiver to: ", "HC-06" if swap_receiver else "HC-05")
-        while keyboard.is_pressed(swap_receiver_hot_key):
-            pass
-    #
-
     # Read from different control sources
     command_flags = 0x00
-    source_string = 'Controller'
-    try:
-        # Raises index error if a controller is not found
-        command_flags = read_controller_commands()
-    except IndexError:
-        # Read keyboard commands since we couldn't find a controller
 
-        if keyboard_override:
-            source_string = 'Keyboard'
-            command_flags = read_keyboard_commands()
-        else:
-            source_string = 'SQS'
-            command_flags = read_from_sqs(sqs_client)
-            command_flags = command_flags if command_flags is not None else previous_command_flags
-
-    # TODO this is temporary remove this when implementing the final version
-    command_flags |= 0b01 if swap_receiver else 0b00
-    #
+    # Read keyboard commands
+    if keyboard_override:
+        source_string = 'Keyboard'
+        command_flags = read_keyboard_commands()
+    else:
+        source_string = 'SQS'
+        command_flags = read_from_sqs(sqs_client)
+        command_flags = command_flags if command_flags is not None else previous_command_flags
 
     # Send the data over bluetooth if the state has changed
     if command_flags != previous_command_flags:
