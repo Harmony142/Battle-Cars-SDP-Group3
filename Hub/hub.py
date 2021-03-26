@@ -85,9 +85,7 @@ while True:
             for team in ['RED', 'BLUE']:
                 if line == 'GOAL ' + team:
                     globals()['score_' + team.lower()] += 1
-                    print('GOAL', team, score_blue)
-                    push_to_database(dynamodb_client, score_red, score_blue,
-                                     end_time - datetime.datetime.now(), targets)
+                    print(line, '\nRED:', score_red, '\nBLUE:', score_blue)
 
     # Update database once a second for timer and car ownership
     if previous_update_time + time_between_updates < datetime.datetime.now():
