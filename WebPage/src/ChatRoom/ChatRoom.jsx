@@ -19,6 +19,41 @@ var sqs = new AWS.SQS({
     region: 'us-east-2'
 });
 
+var dynamodb = new AWS.DynamoDB({
+    accessKeyId: 'AKIAY563PRYUZGQH44NH',
+    secretAccessKey: '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',
+    region: 'us-east-2'
+});
+
+document.interval = setInterval(() => {
+    var params = {
+        ConsistentRead: true,
+        TableName: 'BattleCarsScore',
+        Key: {
+            "id": {
+                "N": "1"
+            }
+        }
+    }
+
+    var response = dynamodb.getItem(params, function(err, data) {
+      if (err) {
+        console.log("DynamoDB Read Error", err);
+      } else {
+        console.log("DynamoDB Read Success");
+        try {
+          var item = response.response.data.Item;
+          var score_red = item.score_red.N;
+          var score_blue = item.score_blue.N;
+          document.getElementById('score-red').innerHTML = score_red;
+          document.getElementById('score-blue').innerHTML = score_blue;
+          console.log("successfully updated score");
+        } catch(err) {
+          console.log("error updating score", err);
+        }
+      }});
+  }, 3000);
+
 document.addEventListener('keydown', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = true;}});
 document.addEventListener('keyup', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = false;}});
 
@@ -55,8 +90,7 @@ const ChatRoom = (props) => {
 
   async function pushToSQS() {
     const payload = JSON.parse(JSON.stringify(curr_keysPressed));
-    var d = new Date();
-    payload['StartTime'] = d.getTime();
+    payload['StartTime'] = Date.now();
     formData.description = JSON.stringify(payload);
     console.log(formData);
     var uuid = uuidv4()
@@ -68,9 +102,9 @@ const ChatRoom = (props) => {
     }
     sqs.sendMessage(params, function(err, data) {
       if (err) {
-        console.log("Error", err);
+        console.log("SQS Send Error", err);
       } else {
-        console.log("Success", data.MessageId);
+        console.log("SQS Send Success", data.MessageId);
       }
     });
     // API.graphql({ query: createTodo, variables: { input: formData } })
@@ -87,10 +121,10 @@ const ChatRoom = (props) => {
       <div className="bottom-bar">
         <div className="left-bar">
           <CustomizationMenu/>
-          <h1 className="score-red">1</h1>
+          <h1 className="score-red" id="score-red">0</h1>
         </div>
         <div className="right-bar">
-          <h1 className="score-blue">0</h1>
+          <h1 className="score-blue" id="score-blue">0</h1>
           <div className="controls-wrapper">
             <div className="wasd-wrapper">
               <h1 className="key" id="KeyW" style={{top: '0px', left: '53px'}}>W</h1>
