@@ -127,16 +127,22 @@ def push_to_database(dynamodb_client, score_red, score_blue, time_left, targets)
 
 
 def initialize_ports():
-    """ Lists serial port names
-        adapted from https://stackoverflow.com/questions/12090503/listing-available-com-ports-with-py
-
-        :raises EnvironmentError:
-            On unsupported or unknown platforms
-        :returns:
-            A list of the serial ports available on the system
     """
+    Opens non-bluetooth serial ports
+    adapted from https://stackoverflow.com/questions/12090503/listing-available-com-ports-with-py
+
+    To find bluetooth COM ports, open settings then go to bluetooth and select "More Bluetooth Options".
+    Inside "More Bluetooth Options", click on "COM Ports" and put the lower number in each pair (outgoing)
+
+    :raises EnvironmentError:
+        On unsupported or unknown platforms
+    :returns:
+        A list of the serial ports available on the system
+    """
+    bluetooth_com_ports = [3, 7]
     if sys.platform.startswith('win'):
-        ports = ['COM%s' % (i + 1) for i in range(11)]
+        ports = set(['COM%s' % (i + 1) for i in range(11)]) - \
+                set(['COM{}'.format(i + j) for i in range(0, 2) for j in bluetooth_com_ports])
     elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
         # this excludes your current terminal "/dev/tty"
         ports = glob.glob('/dev/tty[A-Za-z]*')
@@ -149,6 +155,7 @@ def initialize_ports():
     for port in ports:
         try:
             s = serial.Serial(port=port, baudrate=115200, timeout=1)
+            print(port)
             available_ports.append(s)
         except (OSError, serial.SerialException):
             pass

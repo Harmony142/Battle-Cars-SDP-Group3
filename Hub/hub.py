@@ -33,10 +33,12 @@ dynamodb_client = initialize_dynamodb_client()
 # List of cars in the format [device name, MAC address, socket, player_name, previous_command_flags]
 # TODO update this to maintain previous_command_flags for each car
 targets = [
-    ['HC-06', '20:20:03:19:06:58', None, None, 0x00]
+    ['HC-06', '20:20:03:19:06:58', None, None, 0x00],
+    ['HC-06', '20:20:03:19:31:96', None, None, 0x00]
 ]
 
 # Car PCB 1: 20:20:03:19:06:58
+# Car PCB 2: 20:20:03:19:31:96
 # TODO update the command flags scheme to allow customization
 # Try reconnecting if it fails to connect or the connection is lost
 previous_command_flags = 0x00
@@ -45,7 +47,7 @@ keyboard_override_hot_key = 't'
 keyboard_override = True
 
 # Score keeping setup
-ports = []  # initialize_ports() TODO temporary fix until we fix listening on serial killing bluetooth
+ports = initialize_ports()
 score_red, score_blue = 0, 0
 set_score_hot_key = 'p'
 
@@ -89,7 +91,6 @@ while True:
 
     # Update database once a second for timer and car ownership
     if previous_update_time + time_between_updates < datetime.datetime.now():
-        print('Updating database')
         previous_update_time = datetime.datetime.now()
         push_to_database(dynamodb_client, score_red, score_blue,
                          end_time - previous_update_time, targets)
