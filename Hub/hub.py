@@ -30,6 +30,7 @@ dynamodb_client = initialize_dynamodb_client()
 # TODO test if WASD bug is fixed
 # TODO make boost always available, but you can't steer while it's active
 # TODO make the match only start when all 4 players have joined
+# TODO check that the timer works
 
 # List of cars in the format [device name, MAC address, socket, player_name, previous_command_flags]
 targets = [
@@ -53,7 +54,7 @@ set_score_hot_key = 'p'
 
 
 # Timing
-game_time = 2  # Minutes
+game_time = 20  # Minutes
 time_between_updates = datetime.timedelta(seconds=1)
 previous_update_time = datetime.datetime.now()
 end_time = previous_update_time + datetime.timedelta(minutes=game_time)
