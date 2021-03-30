@@ -40,6 +40,11 @@ def read_from_sqs(sqs_client, targets):
 
     if 'Messages' in response.keys():
         payload = json.loads(response['Messages'][0]['Body'])
+
+        # Ignore commands from players without proper name or car
+        if payload['CarNumber'] is None or payload['PlayerName'] is None:
+            print('a')
+            return None, None
         """
         Bit Positions
         76543210
@@ -49,13 +54,14 @@ def read_from_sqs(sqs_client, targets):
         4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
         """
-        car_index = payload['CarNumber'] - 1
+        car_index = int(payload['CarNumber'].split('-')[1]) - 1
         player_name = payload['PlayerName']
 
         # Ignore commands coming from players who do not own this car once it is claimed
         if targets[car_index][3] is None:
             targets[car_index][3] = player_name
         elif targets[car_index][3] != player_name:
+            print('b')
             return None, None
 
         cmd_flags = 0x00 | car_index

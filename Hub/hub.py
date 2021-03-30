@@ -29,9 +29,9 @@ dynamodb_client = initialize_dynamodb_client()
 # TODO test if boost bug is fixed
 # TODO test if WASD bug is fixed
 # TODO make boost always available, but you can't steer while it's active
+# TODO make the match only start when all 4 players have joined
 
 # List of cars in the format [device name, MAC address, socket, player_name, previous_command_flags]
-# TODO update this to maintain previous_command_flags for each car
 targets = [
     ['HC-06', '20:20:03:19:06:58', None, None, 0x00],
     ['HC-06', '20:20:03:19:31:96', None, None, 0x00]
@@ -44,7 +44,7 @@ targets = [
 previous_command_flags = 0x00
 
 keyboard_override_hot_key = 't'
-keyboard_override = True
+keyboard_override = False
 
 # Score keeping setup
 ports = initialize_ports()
@@ -53,7 +53,7 @@ set_score_hot_key = 'p'
 
 
 # Timing
-game_time = 20  # Minutes
+game_time = 2  # Minutes
 time_between_updates = datetime.timedelta(seconds=1)
 previous_update_time = datetime.datetime.now()
 end_time = previous_update_time + datetime.timedelta(minutes=game_time)
@@ -121,13 +121,9 @@ while True:
     else:
         source_string = 'SQS'
         command_flags, start_time = read_from_sqs(sqs_client, targets)
-        command_flags = command_flags if command_flags is not None else previous_command_flags
 
-    # Determine which car we're sending to
-    car_index = command_flags & 0b11
-
-    # Send the data over bluetooth if the state has changed
-    if command_flags != targets[car_index][4]:
+    # Send the data over bluetooth if the state for the designated car has changed
+    if command_flags is not None and command_flags != targets[command_flags & 0b11][4]:
         """
         Bit Positions
         76543210
@@ -137,7 +133,6 @@ while True:
         4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
         """
-
         for target in targets:
             try:
                 if target[2] is None:
@@ -150,4 +145,4 @@ while True:
                     connect_to_bluetooth(target)
                 except ConnectionError as e:
                     print(e)
-        targets[car_index][4] = command_flags
+        targets[command_flags & 0b11][4] = command_flags

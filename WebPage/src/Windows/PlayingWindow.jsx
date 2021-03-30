@@ -1,60 +1,20 @@
-import React from "react";
-import "./ChatRoom.css";
-import Space from './space.jpg';
-// import { API } from 'aws-amplify';
-// import { createTodo, updateTodo } from '../graphql/mutations';
+import React, { useEffect } from "react";
+import "./Windows.css";
 import CustomizationMenu from './Customization.jsx'
+import { playerName, selectedCar } from '../Home/Home.jsx'
+import { scoreRed, scoreBlue, timer, car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName } from '../App.js';
 
-// updateTodo
 const prev_keysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
 const curr_keysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
 const formData = {id: 1234, name: "hello", description: ""};
 const allowed_keys = Object.keys(curr_keysPressed);
-// console.log(JSON.stringify(allowed_keys));
 
-var AWS = require('aws-sdk');
-var sqs = new AWS.SQS({
+const AWS = require('aws-sdk');
+const sqs = new AWS.SQS({
     accessKeyId: 'AKIAY563PRYUWD457KGQ',
     secretAccessKey: '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',
     region: 'us-east-2'
 });
-
-var dynamodb = new AWS.DynamoDB({
-    accessKeyId: 'AKIAY563PRYUZGQH44NH',
-    secretAccessKey: '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',
-    region: 'us-east-2'
-});
-
-document.interval = setInterval(() => {
-    var params = {
-        ConsistentRead: true,
-        TableName: 'BattleCarsScore',
-        Key: {
-            "id": {
-                "N": "1"
-            }
-        }
-    }
-
-    var response = dynamodb.getItem(params, function(err, data) {
-      if (err) {
-        console.log("DynamoDB Read Error", err);
-      } else {
-        console.log("DynamoDB Read Success");
-        try {
-          var item = response.response.data.Item;
-          var score_red = item.score_red.N;
-          var score_blue = item.score_blue.N;
-          document.getElementById('score-red').innerHTML = score_red;
-          document.getElementById('score-blue').innerHTML = score_blue;
-
-          document.getElementById('time-left').innerHTML = item.time_left.S;
-          console.log("successfully updated from database");
-        } catch(err) {
-          console.log("error updating from database", err);
-        }
-      }});
-  }, 1000);
 
 document.addEventListener('keydown', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = true;}});
 document.addEventListener('keyup', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = false;}});
@@ -69,8 +29,44 @@ function uuidv4() {
   });
 }
 
-const ChatRoom = (props) => {
-  const [newMessage, setNewMessage] = React.useState("");
+const PlayingWindow = (props) => {
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Update the score
+      try {
+        document.getElementById('score-red').innerHTML = scoreRed;
+        document.getElementById('score-blue').innerHTML = scoreBlue;
+      } catch(err) {
+        console.log("could not update score");
+      }
+
+      // Update the timer
+      try {
+        document.getElementById('time-left').innerHTML = timer;
+      } catch(err) {
+        console.log("could not update time left");
+      }
+
+      // Update who is driving what car
+      try {
+        for(var i = 1; i <=4; i++) {
+          const carName = window['car' + i + 'PlayerName'];
+          const element = document.getElementById('car-' + i + '-player-name');
+          if(playerName !== '' && carName === playerName) {
+            element.innerHTML = 'You';
+            element.style.color = '#ffff80';
+          } else {
+            element.innerHTML = carName.length > 10 ? carName.slice(0, 10) + '...' : carName;
+            element.style.color = 'white';
+          }
+        }
+      } catch(err) {
+        console.log("could not update player names", err);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleKeyPress = (event) => {
     if(JSON.stringify(prev_keysPressed) !== JSON.stringify(curr_keysPressed)){
@@ -91,12 +87,15 @@ const ChatRoom = (props) => {
   }
 
   async function pushToSQS() {
+    // Send user commands to our SQS queue to be read and processed by the hub
     const payload = JSON.parse(JSON.stringify(curr_keysPressed));
     payload['StartTime'] = Date.now();
-    payload['PlayerName'] = 'test';
-    payload['CarNumber'] = 1;
+    payload['PlayerName'] = playerName === '' ? null : playerName;
+    payload['CarNumber'] = selectedCar;
     formData.description = JSON.stringify(payload);
-    console.log(formData);
+    // console.log(formData);
+
+    // Use a uuid so no messages are deduped since we can't disable deduplication on FIFO SQS queues
     var uuid = uuidv4()
     var params = {
       MessageDeduplicationId: uuid,  // Required for FIFO queues
@@ -106,13 +105,11 @@ const ChatRoom = (props) => {
     }
     sqs.sendMessage(params, function(err, data) {
       if (err) {
-        console.log("SQS Send Error", err);
+        // console.log("SQS Send Error", err);
       } else {
-        console.log("SQS Send Success", data.MessageId);
+        // console.log("SQS Send Success", data.MessageId);
       }
     });
-    // API.graphql({ query: createTodo, variables: { input: formData } })
-    //    .catch(e => {API.graphql({ query: updateTodo, variables: { input: formData } });});
   }
 
   return (
@@ -120,7 +117,18 @@ const ChatRoom = (props) => {
       <div className="red-half"/>
       <div className="blue-half"/>
       <div className="main-window">
-        <iframe src="https://viewer.millicast.com/v2?streamId=hrFywT/kgplc3ye" allowFullScreen className="room-video"/>
+        <div className="screen-wrapper">
+          <iframe src="https://viewer.millicast.com/v2?streamId=hrFywT/kgplc3ye"
+          allowFullScreen className="room-video"/>
+          <h1 className="car-window-name" id="car-1-player-name"
+          style={{top: '200px', left: '20px', transform: 'rotate(-90deg)'}}/>
+          <h1 className="car-window-name" id="car-2-player-name"
+          style={{bottom: '100px', left: '20px', transform: 'rotate(-90deg)'}}/>
+          <h1 className="car-window-name" id="car-3-player-name"
+          style={{top: '15px', right: '18px', transform: 'rotate(90deg)'}}/>
+          <h1 className="car-window-name" id="car-4-player-name"
+          style={{bottom: '290px', right: '18px', transform: 'rotate(90deg)'}}/>
+        </div>
       </div>
       <div className="bottom-bar">
         <div className="left-bar">
@@ -146,4 +154,4 @@ const ChatRoom = (props) => {
   );
 };
 
-export default ChatRoom;
+export default PlayingWindow;
