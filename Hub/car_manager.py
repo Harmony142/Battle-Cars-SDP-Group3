@@ -4,7 +4,9 @@ from hub_common import initialize_sqs_client, initialize_dynamodb_client, read_f
     push_player_name_to_database, connect_to_bluetooth
 
 
-def car_manager(car_number, mac_address, sqs_access_key, sqs_secret_key):
+def car_manager(car_number, mac_address, sqs_access_key_id, sqs_secret_access_key):
+    car_number = int(car_number)
+
     # Connect to SQS for streaming commands and DynamoDB for pushing player names back to the web page
     # sqs_client = initialize_sqs_client(sqs_access_key, sqs_secret_key)
     dynamodb_client = initialize_dynamodb_client()
@@ -31,7 +33,7 @@ def car_manager(car_number, mac_address, sqs_access_key, sqs_secret_key):
         # Send the data over bluetooth if the state for the designated car has changed
         # Ignore commands coming from players who do not own this car once it is claimed
         """
-        command_flags = 1 << 5
+        command_flags = 1 << 5 if previous_command_flags == 0x00 | car_index else 0x00
         command_flags |= car_index
 
         # if command_flags is not None and command_flags != previous_command_flags \
@@ -58,5 +60,5 @@ def car_manager(car_number, mac_address, sqs_access_key, sqs_secret_key):
                 except ConnectionError as e:
                     print(e)
 
-            time.sleep(2)
+            time.sleep(0.5)
             previous_command_flags = command_flags
