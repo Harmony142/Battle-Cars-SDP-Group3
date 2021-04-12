@@ -30,6 +30,7 @@ dynamodb_client = initialize_dynamodb_client()
 # TODO test if WASD bug is fixed
 # TODO make boost always available, but you can't steer while it's active
 # TODO make the match only start when all 4 players have joined
+# TODO check that the timer works
 
 # List of cars in the format [device name, MAC address, socket, player_name, previous_command_flags]
 targets = [
