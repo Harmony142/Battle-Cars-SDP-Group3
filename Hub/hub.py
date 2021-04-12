@@ -53,7 +53,7 @@ set_score_hot_key = 'p'
 
 
 # Timing
-game_time = 2  # Minutes
+game_time = 20  # Minutes
 time_between_updates = datetime.timedelta(seconds=1)
 previous_update_time = datetime.datetime.now()
 end_time = previous_update_time + datetime.timedelta(minutes=game_time)
@@ -133,6 +133,8 @@ while True:
         4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
         """
+        # print('Sending {0:#010b} from {1}'.format(command_flags, source_string))
+
         for target in targets:
             try:
                 if target[2] is None:
@@ -145,4 +147,5 @@ while True:
                     connect_to_bluetooth(target)
                 except ConnectionError as e:
                     print(e)
+
         targets[command_flags & 0b11][4] = command_flags

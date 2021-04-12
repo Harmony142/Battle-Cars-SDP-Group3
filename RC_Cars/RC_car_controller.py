@@ -69,19 +69,10 @@ uart = busio.UART(board.TX, board.RX, baudrate=9600)
 led = digitalio.DigitalInOut(board.D13)
 led.direction = digitalio.Direction.OUTPUT
 
-
-threshold = 33620
-analog_in = AnalogIn(board.A0)
-
-def get_voltage(pin):
-    return pin.value
+car_index = 0
 
 
 while True:
-    if get_voltage(analog_in) > threshold:  # gyroscope
-        led.value = True
-    else:
-        led.value = False
 
     # Read data from uart coming from the bluetooth module
     data = uart.read(1)
@@ -89,44 +80,44 @@ while True:
     if data is not None:
         command_flags = int.from_bytes(data, 'little')
         print(command_flags)
-        '''
-        Interpret the commands coming from the hub
+        """
         Bit Positions
         76543210
-        0: Y pressed
-        1: B pressed
-        2: A pressed
-        3: X pressed
+        0-1: Car Number
+        2: Unused currently
+        3: Boost Enabled
         4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
-        '''
-        forward_backwards = (command_flags & (0b11 << 4)) >> 4
-        left_right = (command_flags & (0b11 << 6)) >> 6
-        boost = command_flags & 0b1111
+        """
+        target_car = command_flags & 0b11
+        if car_index == target_car:
+            forward_backwards = (command_flags & (0b11 << 4)) >> 4
+            left_right = (command_flags & (0b11 << 6)) >> 6
+            boost = (command_flags & (0b1 << 3)) >> 3
 
-        # Control forwards or backwards
-        if forward_backwards == 0b10:
-            speedController.forward()
-        elif forward_backwards == 0b01:
-            speedController.backward()
-        else:
-            speedController.stop()
+            # Control forwards or backwards
+            if forward_backwards == 0b10:
+                speedController.forward()
+            elif forward_backwards == 0b01:
+                speedController.backward()
+            else:
+                speedController.stop()
 
-        # Control steering
-        if left_right == 0b10:
-            speedController.turn_left()
-        elif left_right == 0b01:
-            speedController.turn_right()
-        else:
-            speedController.straight()
+            # Control steering
+            if left_right == 0b10:
+                speedController.turn_left()
+            elif left_right == 0b01:
+                speedController.turn_right()
+            else:
+                speedController.straight()
 
-        # Control speed boost. Logic is handled by the hub to avoid having to send the data back from the
-        # car if we ever want to show fuel tank capacity
-        # TODO tweak these speeds until they feel appropriate
-        if boost:
-            speedController.m1_speed(65535)
-            speedController.m2_speed(65535)
-        else:
-            speedController.m1_speed(65535)
-            speedController.m2_speed(65535)
+            # Control speed boost. Logic is handled by the hub to avoid having to send the data back from the
+            # car if we ever want to show fuel tank capacity
+            # TODO tweak these speeds until they feel appropriate
+            if boost:
+                speedController.m1_speed(65535//2)
+                speedController.m2_speed(65535//2)
+            else:
+                speedController.m1_speed(65535//4)
+                speedController.m2_speed(65535//4)
 

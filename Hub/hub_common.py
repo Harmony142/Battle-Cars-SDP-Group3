@@ -163,9 +163,9 @@ def initialize_ports():
             s = serial.Serial(port=port, baudrate=115200, timeout=1)
             print(port)
             available_ports.append(s)
-        except (OSError, serial.SerialException):
+        except (OSError, serial.SerialException) as e:
+            # print(e)
             pass
-
     return available_ports
 
 
