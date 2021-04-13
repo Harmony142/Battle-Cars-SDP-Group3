@@ -1,5 +1,4 @@
 
-import datetime
 import sys
 import glob
 import serial
@@ -8,7 +7,6 @@ import keyboard
 from inputs import devices
 import json
 import boto3
-import csv
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -26,13 +24,13 @@ credentials['Secret access key']
 '''
 
 
-def initialize_sqs_client(access_key_id, secret_access_key):
+def initialize_sqs_client():
     # Connect to AWS SQS
     return boto3.client(
         service_name='sqs',
         region_name='us-east-2',
-        aws_access_key_id=access_key_id,
-        aws_secret_access_key=secret_access_key)
+        aws_access_key_id='AKIAY563PRYUW56AU3MJ',
+        aws_secret_access_key='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')
 
 
 def read_from_sqs(sqs_client):

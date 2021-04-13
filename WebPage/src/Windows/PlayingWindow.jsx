@@ -4,22 +4,24 @@ import CustomizationMenu from './Customization.jsx'
 import { playerName, selectedCar } from '../Home/Home.jsx'
 import { scoreRed, scoreBlue, timer, car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName } from '../App.js';
 
-const prev_keysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
-const curr_keysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
-const formData = {id: 1234, name: "hello", description: ""};
-const allowed_keys = Object.keys(curr_keysPressed);
+const prevKeysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
+const currKeysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
+const allowed_keys = Object.keys(currKeysPressed);
 
 const AWS = require('aws-sdk');
+
 const sqs = new AWS.SQS({
     accessKeyId: 'AKIAY563PRYUWD457KGQ',
     secretAccessKey: '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',
     region: 'us-east-2'
 });
 
-document.addEventListener('keydown', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = true;}});
-document.addEventListener('keyup', e => {if(allowed_keys.includes(e.code)){curr_keysPressed[e.code] = false;}});
+document.addEventListener('keydown', e => {if(allowed_keys.includes(e.code)){currKeysPressed[e.code] = true;}});
+document.addEventListener('keyup', e => {if(allowed_keys.includes(e.code)){currKeysPressed[e.code] = false;}});
 
 document.body.style.overflow = "hidden";
+
+const targetCar = selectedCar.split('-')[1];
 
 function uuidv4() {
   // From https://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid
@@ -69,10 +71,10 @@ const PlayingWindow = (props) => {
   }, []);
 
   const handleKeyPress = (event) => {
-    if(JSON.stringify(prev_keysPressed) !== JSON.stringify(curr_keysPressed)){
+    if(JSON.stringify(prevKeysPressed) !== JSON.stringify(currKeysPressed)){
       allowed_keys.forEach(key => {
         var keyStyle = document.getElementById(key).style;
-        if(curr_keysPressed[key]) {
+        if(currKeysPressed[key]) {
             keyStyle.borderStyle = 'inset';
             keyStyle.backgroundColor = '#ffff80';
         } else {
@@ -81,19 +83,20 @@ const PlayingWindow = (props) => {
         }
 
       });
-      pushToSQS();
-      allowed_keys.forEach(key => prev_keysPressed[key] = curr_keysPressed[key]);
+
+      if (playerName === window['car' + targetCar + 'PlayerName']) {
+        pushToSQS();
+      }
+      allowed_keys.forEach(key => prevKeysPressed[key] = currKeysPressed[key]);
     }
   }
 
   async function pushToSQS() {
     // Send user commands to our SQS queue to be read and processed by the hub
-    const payload = JSON.parse(JSON.stringify(curr_keysPressed));
+    const payload = JSON.parse(JSON.stringify(currKeysPressed));
     payload['StartTime'] = Date.now();
     payload['PlayerName'] = playerName === '' ? null : playerName;
     payload['CarNumber'] = selectedCar;
-    formData.description = JSON.stringify(payload);
-    // console.log(formData);
 
     // Use a uuid so no messages are deduped since we can't disable deduplication on FIFO SQS queues
     var uuid = uuidv4()
@@ -101,7 +104,7 @@ const PlayingWindow = (props) => {
       MessageDeduplicationId: uuid,  // Required for FIFO queues
       MessageGroupId: uuid,  // Required for FIFO queues
       MessageBody: JSON.stringify(payload),
-      QueueUrl: 'https://sqs.us-east-2.amazonaws.com/614103748137/user-commands.fifo'
+      QueueUrl: 'https://sqs.us-east-2.amazonaws.com/614103748137/car-commands-' + targetCar + '.fifo'
     }
     sqs.sendMessage(params, function(err, data) {
       if (err) {

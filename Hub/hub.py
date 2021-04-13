@@ -26,17 +26,9 @@ cd pybluez
 
 if __name__ == '__main__':
     # Parameters for car managers, needs MAC Address and (access key ID, secret access key) for respective SQS queue
-    params = [
-        {
-            'mac_address': '20:20:03:19:06:58',
-            'sqs_access_key_id': '',
-            'sqs_secret_access_key': ''
-        },
-        {
-            'mac_address': '20:20:03:19:31:96',
-            'sqs_access_key_id': '',
-            'sqs_secret_access_key': ''
-        }
+    mac_addresses = [
+        '20:20:03:19:06:58',
+        '20:20:03:19:31:96'
     ]
 
     # Initialize the client for sending the score and timer to the players
@@ -71,14 +63,15 @@ if __name__ == '__main__':
         # Reset the score
         score_red, score_blue = 0, 0
 
-        # Remove players from the cars
+        # Restart the car managers
         for process in car_managers:
             process.kill()
 
         car_managers = []
-        for i, param in enumerate(params):
-            param['car_number'] = str(i + 1)
-            car_managers.append(multiprocessing.Process(target=car_manager, kwargs=param, daemon=True))
+        for i, mac_address in enumerate(mac_addresses):
+            car_managers.append(multiprocessing.Process(target=car_manager,
+                                                        kwargs={'car_number': str(i + 1), 'mac_address': mac_address},
+                                                        daemon=True))
             car_managers[-1].start()
 
         # Reset the timer
