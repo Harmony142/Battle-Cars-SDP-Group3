@@ -21,8 +21,6 @@ document.addEventListener('keyup', e => {if(allowed_keys.includes(e.code)){currK
 
 document.body.style.overflow = "hidden";
 
-const targetCar = selectedCar.split('-')[1];
-
 function uuidv4() {
   // From https://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -81,17 +79,20 @@ const PlayingWindow = (props) => {
             keyStyle.borderStyle = 'outset';
             keyStyle.backgroundColor = 'lightgrey';
         }
-
       });
 
-      if (playerName === window['car' + targetCar + 'PlayerName']) {
-        pushToSQS();
+      if (selectedCar !== null) {
+        const targetCar = selectedCar.split('-')[1];
+        const currentPlayer = window['car' + targetCar + 'PlayerName'];
+        if (currentPlayer === '' || playerName === currentPlayer) {
+          pushToSQS(targetCar);
+        }
       }
       allowed_keys.forEach(key => prevKeysPressed[key] = currKeysPressed[key]);
     }
   }
 
-  async function pushToSQS() {
+  async function pushToSQS(targetCar) {
     // Send user commands to our SQS queue to be read and processed by the hub
     const payload = JSON.parse(JSON.stringify(currKeysPressed));
     payload['StartTime'] = Date.now();
@@ -108,9 +109,9 @@ const PlayingWindow = (props) => {
     }
     sqs.sendMessage(params, function(err, data) {
       if (err) {
-        // console.log("SQS Send Error", err);
+        console.log("SQS Send Error", err);
       } else {
-        // console.log("SQS Send Success", data.MessageId);
+        console.log("SQS Send Success", data.MessageId);
       }
     });
   }

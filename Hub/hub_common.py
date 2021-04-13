@@ -39,7 +39,7 @@ def read_from_sqs(sqs_client, car_number):
     response = sqs_client.receive_message(
         QueueUrl=queue_url,
         MaxNumberOfMessages=1,
-        WaitTimeSeconds=1
+        WaitTimeSeconds=20
     )
 
     try:
