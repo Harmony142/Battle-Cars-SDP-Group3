@@ -1,5 +1,4 @@
 
-import time
 from hub_common import initialize_sqs_client, initialize_dynamodb_client, read_from_sqs, \
     push_player_name_to_database, connect_to_bluetooth
 
@@ -19,7 +18,7 @@ def car_manager(car_number, mac_address):
 
     while 1:
         # Read from SQS
-        command_flags, start_time, command_player_name = read_from_sqs(sqs_client)
+        command_flags, start_time, command_player_name = read_from_sqs(sqs_client, car_number)
         
         if active_player_name is None:
             # Claim a car and update the database
@@ -27,7 +26,8 @@ def car_manager(car_number, mac_address):
             push_player_name_to_database(dynamodb_client, car_number, active_player_name)
             
         # Append which car this is targeting
-        command_flags |= car_index
+        if command_flags is not None:
+            command_flags |= car_index
     
         # Send the data over bluetooth if the state for the designated car has changed
         # Ignore commands coming from players who do not own this car once it is claimed
@@ -54,5 +54,4 @@ def car_manager(car_number, mac_address):
                 except ConnectionError as e:
                     print(e)
 
-            time.sleep(0.5)
             previous_command_flags = command_flags

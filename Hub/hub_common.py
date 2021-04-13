@@ -33,8 +33,8 @@ def initialize_sqs_client():
         aws_secret_access_key='csWHkuT8N9QDv75U3rzth8iLpju5QQr7NgzXvwoQ')
 
 
-def read_from_sqs(sqs_client):
-    queue_url = 'https://sqs.us-east-2.amazonaws.com/614103748137/user-commands.fifo'
+def read_from_sqs(sqs_client, car_number):
+    queue_url = 'https://sqs.us-east-2.amazonaws.com/614103748137/car-commands-{}.fifo'.format(car_number)
 
     response = sqs_client.receive_message(
         QueueUrl=queue_url,
