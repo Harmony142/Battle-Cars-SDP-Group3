@@ -16,6 +16,9 @@ def car_manager(car_number, mac_address):
     previous_command_flags = 0x00
     car_index = car_number - 1
 
+    # Clear the player name in the DynamoDB table
+    push_player_name_to_database(dynamodb_client, car_number, active_player_name)
+
     while 1:
         # Read from SQS
         command_flags, start_time, command_player_name = read_from_sqs(sqs_client, car_number)
