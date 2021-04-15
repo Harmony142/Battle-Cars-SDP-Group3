@@ -84,8 +84,8 @@ PATTERNS:
 001 - Flashing - All LEDs current_color then ALL LEDs off
 010 - Alternating - Every other LED current_color and off, swaps
 011 - Snake - snake_length LEDs current_color, then snake_length LEDs off, cycles down strip
-100 - Pulse - 1 LED current_color with pulse_gap off LEDs inbetween
-101 - Wave - Increases and decreases brigthness each for wave_values LEDs
+100 - Pulse - 1 LED current_color with pulse_gap off LEDs in between
+101 - Wave - Increases and decreases brightness each for wave_values LEDs
 110 - Rainbow - LEDs pass colors of the rainbow
 111 - Party - All LEDs cycle through the colors of the rainbow
 Anything else - Off - All LEDs off
@@ -305,7 +305,7 @@ while True:
         """
         Bit Positions
         76543210
-        0-1: Car Number
+        0-1: Unused
         2: Ensuing Customization Data
         3: Boost Enabled
         4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
@@ -324,43 +324,41 @@ while True:
                     print('Received:', int.from_bytes(packet, 'little'))
                     customization_data.append(int.from_bytes(packet, 'little'))
 
-        target_car = command_flags & 0b11
-        if car_index == target_car:
-            # Customization Control
-            if ensuing_customiztion:
-                initialize_pattern(customization_data[0], tuple(customization_data[1:]))
+        # Customization Control
+        if ensuing_customiztion:
+            initialize_pattern(customization_data[0], tuple(customization_data[1:]))
 
-            # Car Controls
-            forward_backwards = (command_flags & (0b11 << 4)) >> 4
-            left_right = (command_flags & (0b11 << 6)) >> 6
-            boost = (command_flags & (0b1 << 3)) >> 3
+        # Car Controls
+        forward_backwards = (command_flags & (0b11 << 4)) >> 4
+        left_right = (command_flags & (0b11 << 6)) >> 6
+        boost = (command_flags & (0b1 << 3)) >> 3
 
-            # Control speed boost. Logic is handled by the hub to avoid having to send the data back from the
-            # car if we ever want to show fuel tank capacity
-            # TODO tweak these speeds until they feel appropriate
-            if boost:
-                # Can only go forward while boosting
-                speedController.m1_speed(65535 // 2)
-                speedController.m2_speed(65535 // 2)
+        # Control speed boost. Logic is handled by the hub to avoid having to send the data back from the
+        # car if we ever want to show fuel tank capacity
+        # TODO tweak these speeds until they feel appropriate
+        if boost:
+            # Can only go forward while boosting
+            speedController.m1_speed(65535 // 2)
+            speedController.m2_speed(65535 // 2)
 
+            speedController.forward()
+            speedController.straight()
+        else:
+            speedController.m1_speed(65535 // 4)
+            speedController.m2_speed(65535 // 4)
+
+            # Control forwards or backwards
+            if forward_backwards == 0b10:
                 speedController.forward()
-                speedController.straight()
+            elif forward_backwards == 0b01:
+                speedController.backward()
             else:
-                speedController.m1_speed(65535 // 4)
-                speedController.m2_speed(65535 // 4)
+                speedController.stop()
 
-                # Control forwards or backwards
-                if forward_backwards == 0b10:
-                    speedController.forward()
-                elif forward_backwards == 0b01:
-                    speedController.backward()
-                else:
-                    speedController.stop()
-
-                # Control steering
-                if left_right == 0b10:
-                    speedController.turn_left()
-                elif left_right == 0b01:
-                    speedController.turn_right()
-                else:
-                    speedController.straight()
+            # Control steering
+            if left_right == 0b10:
+                speedController.turn_left()
+            elif left_right == 0b01:
+                speedController.turn_right()
+            else:
+                speedController.straight()

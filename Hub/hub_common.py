@@ -49,8 +49,8 @@ def read_from_sqs(sqs_client, car_number):
         """
         Bit Positions
         76543210
-        0-1: Car Number
-        2: Unused currently
+        0-1: Unused
+        2: Ensuing Customization Data
         3: Boost Enabled
         4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
