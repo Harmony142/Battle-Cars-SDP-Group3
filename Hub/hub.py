@@ -28,7 +28,9 @@ if __name__ == '__main__':
     # Parameters for car managers, needs MAC Address and (access key ID, secret access key) for respective SQS queue
     mac_addresses = [
         '20:20:03:19:06:58',
-        '20:20:03:19:31:96'
+        # '20:20:03:19:31:96',
+        # '20:20:03:19:06:47',
+        # '20:20:03:19:10:31'
     ]
 
     # Initialize the client for sending the score and timer to the players

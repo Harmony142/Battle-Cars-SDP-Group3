@@ -1,6 +1,6 @@
 
 from hub_common import initialize_sqs_client, initialize_dynamodb_client, read_from_sqs, \
-    push_player_name_to_database, connect_to_bluetooth
+    push_player_name_to_database, connect_to_bluetooth, pattern_map
 
 
 def car_manager(car_number, mac_address):
@@ -13,7 +13,8 @@ def car_manager(car_number, mac_address):
     # Representation of a car in the format [device name, MAC address, socket, player_name, previous_command_flags]
     bluetooth_socket = None
     active_player_name = None
-    previous_command_flags = 0x00
+    previous_command_flags = None
+    current_customization_data = {'Pattern': pattern_map['Rainbow'], 'Red': 50, 'Green': 50, 'Blue': 50}
     car_index = car_number - 1
 
     # Clear the player name in the DynamoDB table
@@ -23,19 +24,17 @@ def car_manager(car_number, mac_address):
         # Read from SQS
         command_flags, start_time, command_player_name, customization_data = read_from_sqs(sqs_client, car_number)
         
-        if active_player_name is None:
+        if command_player_name is not None and active_player_name is None:
             # Claim a car and update the database
             active_player_name = command_player_name
+            print(active_player_name, 'connected to Car', car_number)
             push_player_name_to_database(dynamodb_client, car_number, active_player_name)
-            
-        # Append which car this is targeting
-        if command_flags is not None:
-            command_flags |= car_index
     
         # Send the data over bluetooth if the state for the designated car has changed
         # Ignore commands coming from players who do not own this car once it is claimed
-        if command_flags is not None and command_flags != previous_command_flags \
-                and command_player_name == active_player_name:
+        if command_flags is not None and command_player_name == active_player_name \
+                and (previous_command_flags is None or command_flags != previous_command_flags
+                     or current_customization_data != customization_data):
             """
             Bit Positions
             76543210
@@ -47,17 +46,23 @@ def car_manager(car_number, mac_address):
             """
             try:
                 if bluetooth_socket is None:
-                    print('First connection for car {}, attempting to connect'.format(car_number))
+                    print('First connection for Car {}, attempting to connect'.format(car_number))
                     bluetooth_socket = connect_to_bluetooth(mac_address)
 
-                print('Sending {0:#010b} to {1}'.format(command_flags, car_number))
+                print('Sending {0:#010b} to Car {1}'.format(command_flags, car_number))
 
                 # Always send command_flags
                 bluetooth_socket.send(command_flags.to_bytes(1, "little"))
 
                 # Send customization data if present
                 if customization_data is not None:
-                    bluetooth_socket.send(command_flags.to_bytes(1, "little"))
+                    print('Sending Customization Data ({Pattern}, {Red}, {Green}, {Blue}) to Car'.format(
+                        **customization_data), car_number)
+                    bluetooth_socket.send(customization_data['Pattern'].to_bytes(1, "little"))
+                    bluetooth_socket.send(customization_data['Red'].to_bytes(1, "little"))
+                    bluetooth_socket.send(customization_data['Green'].to_bytes(1, "little"))
+                    bluetooth_socket.send(customization_data['Blue'].to_bytes(1, "little"))
+                    current_customization_data = customization_data
 
             except OSError:
                 print('Disconnected from car {}, attempting to reconnect'.format(car_number))

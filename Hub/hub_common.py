@@ -87,8 +87,10 @@ def read_from_sqs(sqs_client, car_number):
         customization_keys = ['Pattern', 'Red', 'Green', 'Blue']
         if all(key in payload.keys() for key in customization_keys):
             cmd_flags |= 1 << 2
-            customization_data['Pattern'] = pattern_map[payload['Pattern']]
-            customization_data = {k: payload[k] for k in customization_keys[1:]}
+            customization_data = {
+                'Pattern': pattern_map[payload['Pattern']],
+                **{k: int(payload[k]) for k in customization_keys[1:]}
+            }
 
         return cmd_flags, payload['StartTime'], player_name, customization_data
     except KeyError:

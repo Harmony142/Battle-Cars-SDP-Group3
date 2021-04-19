@@ -301,7 +301,7 @@ while True:
 
     if data is not None:
         command_flags = int.from_bytes(data, 'little')
-        print(command_flags)
+        # print(command_flags)
         """
         Bit Positions
         76543210
@@ -316,12 +316,12 @@ while True:
         # Check if we need to read customization data
         customization_data = []
         if ensuing_customiztion:
-            print('Waiting for customization data')
+            # print('Waiting for customization data')
             # Customization data comes over bluetooth one byte at a time in the order Pattern - R - G - B
             while len(customization_data) < 4:
                 packet = uart.read(1)
                 if packet is not None:
-                    print('Received:', int.from_bytes(packet, 'little'))
+                    # print('Received:', int.from_bytes(packet, 'little'))
                     customization_data.append(int.from_bytes(packet, 'little'))
 
         # Customization Control
