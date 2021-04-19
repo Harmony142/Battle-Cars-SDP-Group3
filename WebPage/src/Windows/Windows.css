@@ -103,7 +103,7 @@
 .time-left {
     position: absolute;
     margin: 0px;
-    left: 150px;
+    left: 220px;
     bottom: 6px;
 }
 
@@ -156,4 +156,198 @@
     border-color: grey;
     border-width: 5px;
     border-radius: 5px;
+}
+
+.slider-wrapper {
+    position: absolute;
+    left: 10px;
+    width: 200px;
+    margin: 0px;
+    z-index: 1;
+}
+
+/* The following was templated from https://www.w3schools.com/howto/howto_js_rangeslider.asp */
+/* and https://stackoverflow.com/questions/18389224/how-to-style-html5-range-input-to-have-different-color-before-and-after-slider */
+.slider-container {
+  width: 100%; /* Width of the outside container */
+  height: 30px;
+}
+
+/* The slider itself */
+.red-slider, .green-slider, .blue-slider {
+  -webkit-appearance: none;  /* Override default CSS styles */
+  appearance: none;
+  width: 100%; /* Full-width */
+  height: 16px; /* Specified height */
+  background: lightgrey; /* Grey background */
+  overflow: hidden;
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+  transition: opacity .2s;
+  border-radius: 5px;
+}
+
+/* Mouse-over effects */
+.red-slider:hover, .green-slider:hover, .blue-slider:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.red-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 16px; /* Set a specific slider handle width */
+  height: 16px; /* Slider handle height */
+  background: black;
+  cursor: pointer; /* Cursor on hover */
+  border-radius: 5px;
+  box-shadow: -128px 0 0 120px red;
+}
+
+.green-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 16px; /* Set a specific slider handle width */
+  height: 16px; /* Slider handle height */
+  background: black;
+  cursor: pointer; /* Cursor on hover */
+  border-radius: 5px;
+  box-shadow: -128px 0 0 120px green;
+}
+
+.blue-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 16px; /* Set a specific slider handle width */
+  height: 16px; /* Slider handle height */
+  background: black;
+  cursor: pointer; /* Cursor on hover */
+  border-radius: 5px;
+  box-shadow: -128px 0 0 120px blue;
+}
+
+.red-slider::-moz-range-thumb {
+  width: 16px; /* Set a specific slider handle width */
+  height: 16px; /* Slider handle height */
+  background: #4CAF50; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+  border-radius: 50px;
+  background: black;
+  box-shadow: -128px 0 0 120px red;
+}
+
+.green-slider::-moz-range-thumb {
+  width: 16px; /* Set a specific slider handle width */
+  height: 16px; /* Slider handle height */
+  background: #4CAF50; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+  border-radius: 50px;
+  background: black;
+  box-shadow: -128px 0 0 120px green;
+}
+
+.blue-slider::-moz-range-thumb {
+  width: 16px; /* Set a specific slider handle width */
+  height: 16px; /* Slider handle height */
+  background: #4CAF50; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+  border-radius: 50px;
+  background: black;
+  box-shadow: -128px 0 0 120px blue;
+}
+
+/* FF */
+.red-slider::-moz-range-progress {
+  background-color: red;
+}
+
+.green-slider::-moz-range-progress {
+  background-color: green;
+}
+
+.blue-slider::-moz-range-progress {
+  background-color: blue;
+}
+
+.red-slider::-moz-range-track, .green-slider::-moz-range-track, .blue-slider::-moz-range-track {
+  background-color: lightgrey;
+}
+
+/* IE */
+.red-slider::-ms-fill-lower {
+  background-color: red;
+}
+
+.green-slider::-ms-fill-lower {
+  background-color: green;
+}
+
+.blue-slider::-ms-fill-lower {
+  background-color: blue;
+}
+
+.red-slider::-ms-fill-upper, .green-slider::-ms-fill-upper, .blue-slider::-ms-fill-upper {
+  background-color: lightgrey;
+}
+
+/* The following was templated from https://www.w3schools.com/howto/howto_css_dropup.asp */
+/* Style The Dropdown Button */
+/* Dropup Button */
+.dropup-button {
+  width: 110px;
+  height: 40px;
+  background-color: dodgerblue;
+  color: white;
+  font-size: 16px;
+  border-style: solid;
+  border-color: black;
+  border-width: 2px;
+  border-radius: 5px;
+}
+
+/* The container <div> - needed to position the dropup content */
+.dropup {
+  position: absolute;
+  margin: 0px;
+  top: 0px;
+  left: 220px;
+  display: inline-block;
+  z-index: 1;
+}
+
+/* Dropup content (Hidden by Default) */
+.dropup-content {
+  display: none;
+  position: absolute;
+  bottom: 40px;
+  background-color: #f1f1f1;
+  width: 110px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  border-radius: 2px;
+}
+
+/* Links inside the dropup */
+.dropup-content pattern {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  border-radius: 2px;
+}
+
+/* Change color of dropup links on hover */
+.dropup-content pattern:hover {
+  background-color: #ddd;
+}
+
+/* Show the dropup menu on hover */
+.dropup:hover .dropup-content {
+  display: block;
+}
+
+/* Change the background color of the dropup button when the dropup content is shown */
+.dropup:hover .dropup-button {
+  background-color: deepskyblue;
 }

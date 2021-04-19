@@ -33,6 +33,19 @@ def initialize_sqs_client():
         aws_secret_access_key='csWHkuT8N9QDv75U3rzth8iLpju5QQr7NgzXvwoQ')
 
 
+pattern_map = {
+    'Off' : 200,
+    'Solid': 0,
+    'Flashing': 1,
+    'Alternating': 2,
+    'Snake': 3,
+    'Pulse': 4,
+    'Wave': 5,
+    'Rainbow': 6,
+    'Party': 7
+}
+
+
 def read_from_sqs(sqs_client, car_number):
     queue_url = 'https://sqs.us-east-2.amazonaws.com/614103748137/car-commands-{}.fifo'.format(car_number)
 
@@ -56,25 +69,34 @@ def read_from_sqs(sqs_client, car_number):
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
         """
         cmd_flags = 0x00
-        if bool(payload['KeyS']):
-            cmd_flags |= 1 << 4
-        if bool(payload['KeyW']):
-            cmd_flags |= 1 << 5
-        if bool(payload['KeyA']):
-            cmd_flags |= 1 << 6
-        if bool(payload['KeyD']):
-            cmd_flags |= 1 << 7
+        command_keys = ['KeyS', 'KeyW', 'KeyA', 'KeyD', 'ShiftLeft']
+        if all(key in payload.keys() for key in command_keys):
+            if bool(payload['KeyS']):
+                cmd_flags |= 1 << 4
+            if bool(payload['KeyW']):
+                cmd_flags |= 1 << 5
+            if bool(payload['KeyA']):
+                cmd_flags |= 1 << 6
+            if bool(payload['KeyD']):
+                cmd_flags |= 1 << 7
 
-        if bool(payload['ShiftLeft']):
-            cmd_flags |= 1 << 3
+            if bool(payload['ShiftLeft']):
+                cmd_flags |= 1 << 3
 
-        return cmd_flags, payload['StartTime'], player_name
+        customization_data = None
+        customization_keys = ['Pattern', 'Red', 'Green', 'Blue']
+        if all(key in payload.keys() for key in customization_keys):
+            cmd_flags |= 1 << 2
+            customization_data['Pattern'] = pattern_map[payload['Pattern']]
+            customization_data = {k: payload[k] for k in customization_keys[1:]}
+
+        return cmd_flags, payload['StartTime'], player_name, customization_data
     except KeyError:
         pass
     except IndexError:
         pass
 
-    return None, None, None
+    return None, None, None, None
 
 
 def initialize_dynamodb_client():

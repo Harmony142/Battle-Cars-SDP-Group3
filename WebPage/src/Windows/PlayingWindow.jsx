@@ -81,39 +81,56 @@ const PlayingWindow = (props) => {
         }
       });
 
-      if (selectedCar !== null) {
-        const targetCar = selectedCar.split('-')[1];
-        const currentPlayer = window['car' + targetCar + 'PlayerName'];
-        if (currentPlayer === '' || playerName === currentPlayer) {
-          pushToSQS(targetCar);
-        }
-      }
+      // Send user commands to our SQS queue to be read and processed by the hub
+      const payload = JSON.parse(JSON.stringify(currKeysPressed));
+      payload['StartTime'] = Date.now();
+      payload['PlayerName'] = playerName === '' ? null : playerName;
+
+      pushToSQS(payload);
       allowed_keys.forEach(key => prevKeysPressed[key] = currKeysPressed[key]);
     }
   }
 
-  async function pushToSQS(targetCar) {
-    // Send user commands to our SQS queue to be read and processed by the hub
+  const sendCustomizationData = (event) => {
     const payload = JSON.parse(JSON.stringify(currKeysPressed));
     payload['StartTime'] = Date.now();
     payload['PlayerName'] = playerName === '' ? null : playerName;
-    payload['CarNumber'] = selectedCar;
+    payload['Pattern'] = document.getElementById('dropup-button').innerHTML;
+    payload['Red'] = document.getElementById('red-slider').value;
+    payload['Green'] = document.getElementById('green-slider').value;
+    payload['Blue'] = document.getElementById('blue-slider').value;
 
-    // Use a uuid so no messages are deduped since we can't disable deduplication on FIFO SQS queues
-    var uuid = uuidv4()
-    var params = {
-      MessageDeduplicationId: uuid,  // Required for FIFO queues
-      MessageGroupId: uuid,  // Required for FIFO queues
-      MessageBody: JSON.stringify(payload),
-      QueueUrl: 'https://sqs.us-east-2.amazonaws.com/614103748137/car-commands-' + targetCar + '.fifo'
-    }
-    sqs.sendMessage(params, function(err, data) {
-      if (err) {
-        console.log("SQS Send Error", err);
-      } else {
-        console.log("SQS Send Success", data.MessageId);
+    pushToSQS(payload);
+  }
+
+  const selectPattern = (event) => {
+    document.getElementById("dropup-button").innerHTML = event.target.innerHTML;
+    sendCustomizationData();
+  }
+
+  async function pushToSQS(payload) {
+    if (selectedCar !== null) {
+      const targetCar = selectedCar.split('-')[1];
+      const currentPlayer = window['car' + targetCar + 'PlayerName'];
+      if (currentPlayer === '' || playerName === currentPlayer) {
+        // Use a uuid so no messages are deduped since we can't disable deduplication on FIFO SQS queues
+        var uuid = uuidv4()
+        var params = {
+          MessageDeduplicationId: uuid,  // Required for FIFO queues
+          MessageGroupId: uuid,  // Required for FIFO queues
+          MessageBody: JSON.stringify(payload),
+          QueueUrl: 'https://sqs.us-east-2.amazonaws.com/614103748137/car-commands-' + targetCar + '.fifo'
+        }
+
+        sqs.sendMessage(params, function(err, data) {
+          if (err) {
+            console.log("SQS Send Error", err);
+          } else {
+            console.log("SQS Send Success", data.MessageId);
+          }
+        });
       }
-    });
+    }
   }
 
   return (
@@ -136,7 +153,34 @@ const PlayingWindow = (props) => {
       </div>
       <div className="bottom-bar">
         <div className="left-bar">
-          <CustomizationMenu/>
+          <div className="slider-wrapper">
+            <div class="slider-container">
+              <input type="range" min="0" max="255" class="red-slider" id="red-slider"
+              onMouseUp={sendCustomizationData}/>
+            </div>
+            <div class="slider-container">
+              <input type="range" min="0" max="255" class="green-slider" id="green-slider"
+              onMouseUp={sendCustomizationData}/>
+            </div>
+            <div class="slider-container">
+              <input type="range" min="0" max="255" class="blue-slider" id="blue-slider"
+              onMouseUp={sendCustomizationData}/>
+            </div>
+          </div>
+          <div class="dropup">
+            <button class="dropup-button" id="dropup-button">Off</button>
+            <div class="dropup-content">
+              <pattern onMouseDown={selectPattern}>Off</pattern>
+              <pattern onMouseDown={selectPattern}>Solid</pattern>
+              <pattern onMouseDown={selectPattern}>Flashing</pattern>
+              <pattern onMouseDown={selectPattern}>Alternating</pattern>
+              <pattern onMouseDown={selectPattern}>Snake</pattern>
+              <pattern onMouseDown={selectPattern}>Pulse</pattern>
+              <pattern onMouseDown={selectPattern}>Wave</pattern>
+              <pattern onMouseDown={selectPattern}>Rainbow</pattern>
+              <pattern onMouseDown={selectPattern}>Party</pattern>
+            </div>
+          </div>
           <h1 className="time-left" id="time-left">20:00</h1>
           <h1 className="score-red" id="score-red">0</h1>
         </div>
