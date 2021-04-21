@@ -21,17 +21,17 @@ from hub_common import initialize_ports
 from car_manager import car_manager
 
 # Number of commands to send to each car
-n = 10
+n = 3
 
-# Confidence value for intervals
-confidence = .95
+# z score for 95% confidence interval
+z_score = 1.96
 
 # MAC addresses of the connected cars
 mac_addresses = [
-    '20:20:03:19:06:58',
     '20:20:03:19:31:96',
-    '20:20:03:19:06:47',
-    '20:20:03:19:10:31'
+    '98:D3:32:11:0B:77',
+    # '20:20:03:19:06:58',
+    # '20:20:03:19:10:31'
 ]
 
 # Lists for maintaining car indices, numbers, and names
@@ -56,11 +56,11 @@ sqs_send_client = boto3.client(
 
 
 # Function for sending SQS commands to a car's SQS queue
-def send_to_sqs(number, payload):
+def send_to_sqs(car_number_, payload):
     message_id = str(uuid.uuid4())
 
     sqs_send_client.send_message(
-        QueueUrl='https://sqs.us-east-2.amazonaws.com/614103748137/car-commands-{}.fifo'.format(number),
+        QueueUrl='https://sqs.us-east-2.amazonaws.com/614103748137/car-commands-{}.fifo'.format(car_number_),
         MessageBody=json.dumps(payload),
         DelaySeconds=0,
         MessageDeduplicationId=message_id,
@@ -75,7 +75,7 @@ def response_manager():
 
     # Tables for measuring response times from the cars
     response_times = pandas.DataFrame(index=numpy.arange(n), columns=car_names, dtype='float')
-    response_indices = numpy.zeros(len(mac_addresses))
+    response_indices = numpy.zeros(shape=len(mac_addresses), dtype='int')
 
     while response_times.tail(1).isna().any(None):
         # See if a car is reporting back to us
@@ -84,8 +84,9 @@ def response_manager():
                 # Check if a car is responding to a message
                 line = port.readline().decode('utf-8').strip()
                 if line.startswith('Message Received by Car '):
+                    print(line)
                     # Strip the car index from the message
-                    car_index_ = line.split()[-1]
+                    car_index_ = int(line.split()[-1])
 
                     # Record the response time
                     response_times.at[response_indices[car_index_], car_names[car_index_]] = datetime.datetime.now()
@@ -94,7 +95,8 @@ def response_manager():
                     response_indices[car_index_] += 1
 
     # Write the response times to a file and exit so the main process can continue
-    response_times.to_csv(response_times_file_path)
+    response_times.to_csv(response_times_file_path, index=False)
+    exit(0)
 
 
 if __name__ == '__main__':
@@ -125,9 +127,6 @@ if __name__ == '__main__':
             'Blue': 255 if car_index in [2, 3] else 0
         })
 
-    # Give the hub a couple seconds to connect all the cars
-    time.sleep(4)
-
     # Create our range of message_delays
     message_delays = numpy.linspace(start=1000, stop=50, num=1)
 
@@ -137,6 +136,9 @@ if __name__ == '__main__':
         print('Setting up response manager')
         response_manager_process = multiprocessing.Process(target=response_manager, daemon=True)
         response_manager_process.start()
+
+        # Give the response manager time to initialize ports
+        time.sleep(5)
 
         # Time interval between commands
         message_rate = datetime.timedelta(milliseconds=1000)
@@ -183,18 +185,18 @@ if __name__ == '__main__':
 
         # Read the results and calculate the time differences
         print('Calculating differences')
-        response_times_ = pandas.read_csv(response_times_file_path)
-        delays = response_times_ - start_times
+        # start_times = pandas.read_csv(start_times_file_path, parse_dates=car_names)
+        response_times_ = pandas.read_csv(response_times_file_path, parse_dates=car_names)
+        delays = (response_times_ - start_times) / numpy.timedelta64(1, 's') * 1e3
         delays.to_csv(delays_file_path)
+        delays = delays.values
 
         # Statistical analysis of results
         # Adapted from https://stackoverflow.com/questions/15033511/compute-a-confidence-interval-from-sample-data
+        N = n * len(mac_addresses)
+        # sample_mean = delays.sum() / N
         sample_mean = delays.mean(axis=None)
+        # standard_error_of_the_mean = numpy.sqrt((((delays - sample_mean) ** 2).sum() / (N - 1)) / N)
         standard_error_of_the_mean = stats.sem(a=delays, axis=None)
-        interval = stats.t.interval(confidence, n - 1, loc=sample_mean, scale=standard_error_of_the_mean)
-
-        print(sample_mean)
-        print(sample_mean + 1.96 * standard_error_of_the_mean / sample_mean)
-        print(interval)
 
     print('Total Script Running Time:', datetime.datetime.now() - timing_script_start_time)

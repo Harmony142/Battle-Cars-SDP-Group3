@@ -27,9 +27,9 @@ cd pybluez
 if __name__ == '__main__':
     # Parameters for car managers, needs MAC Address and (access key ID, secret access key) for respective SQS queue
     mac_addresses = [
-        '20:20:03:19:06:58',
+        # '20:20:03:19:06:58',
         # '20:20:03:19:31:96',
-        # '20:20:03:19:06:47',
+        '98:D3:32:11:0B:77',
         # '20:20:03:19:10:31'
     ]
 

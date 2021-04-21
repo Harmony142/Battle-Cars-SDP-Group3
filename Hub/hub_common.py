@@ -176,17 +176,17 @@ def initialize_ports():
     adapted from https://stackoverflow.com/questions/12090503/listing-available-com-ports-with-py
 
     To find bluetooth COM ports, open settings then go to bluetooth and select "More Bluetooth Options".
-    Inside "More Bluetooth Options", click on "COM Ports" and put the lower number in each pair (outgoing)
+    Inside "More Bluetooth Options", click on "COM Ports" and put all COM ports in "bluetooth_com_ports"
 
     :raises EnvironmentError:
         On unsupported or unknown platforms
     :returns:
         A list of the serial ports available on the system
     """
-    bluetooth_com_ports = [3, 7]
+    bluetooth_com_ports = [4, 7, 16, 17]
     if sys.platform.startswith('win'):
-        ports = set(['COM%s' % (i + 1) for i in range(11)]) - \
-                set(['COM{}'.format(i + j) for i in range(0, 2) for j in bluetooth_com_ports])
+        ports = set(['COM%s' % (i + 1) for i in range(30)]) - \
+                set(['COM{}'.format(i) for i in bluetooth_com_ports])
     elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
         # this excludes your current terminal "/dev/tty"
         ports = glob.glob('/dev/tty[A-Za-z]*')
