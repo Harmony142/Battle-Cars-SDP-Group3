@@ -34,7 +34,7 @@ def initialize_sqs_client():
 
 
 pattern_map = {
-    'Off' : 200,
+    'Off': 200,
     'Solid': 0,
     'Flashing': 1,
     'Alternating': 2,
@@ -44,6 +44,25 @@ pattern_map = {
     'Rainbow': 6,
     'Party': 7
 }
+
+
+def interpret_command_payload(payload):
+    cmd_flags = 0x00
+    command_keys = ['KeyS', 'KeyW', 'KeyA', 'KeyD', 'ShiftLeft']
+    if all(key in payload.keys() for key in command_keys):
+        if bool(payload['KeyS']):
+            cmd_flags |= 1 << 4
+        if bool(payload['KeyW']):
+            cmd_flags |= 1 << 5
+        if bool(payload['KeyA']):
+            cmd_flags |= 1 << 6
+        if bool(payload['KeyD']):
+            cmd_flags |= 1 << 7
+
+        if bool(payload['ShiftLeft']):
+            cmd_flags |= 1 << 3
+
+    return cmd_flags
 
 
 def read_from_sqs(sqs_client, car_number):
@@ -68,20 +87,7 @@ def read_from_sqs(sqs_client, car_number):
         4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
         """
-        cmd_flags = 0x00
-        command_keys = ['KeyS', 'KeyW', 'KeyA', 'KeyD', 'ShiftLeft']
-        if all(key in payload.keys() for key in command_keys):
-            if bool(payload['KeyS']):
-                cmd_flags |= 1 << 4
-            if bool(payload['KeyW']):
-                cmd_flags |= 1 << 5
-            if bool(payload['KeyA']):
-                cmd_flags |= 1 << 6
-            if bool(payload['KeyD']):
-                cmd_flags |= 1 << 7
-
-            if bool(payload['ShiftLeft']):
-                cmd_flags |= 1 << 3
+        cmd_flags = interpret_command_payload(payload)
 
         customization_data = None
         customization_keys = ['Pattern', 'Red', 'Green', 'Blue']
