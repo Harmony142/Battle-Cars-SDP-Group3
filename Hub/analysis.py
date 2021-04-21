@@ -1,19 +1,20 @@
 
 import numpy
-from timing import n, starting_delay, ending_delay, message_delays, sample_means_file_path, standard_errors_file_path
+from timing import n, starting_delay, ending_delay, message_delays, z_score, \
+    sample_means_file_path, standard_errors_file_path, graph_file_path
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     # Load the results
-    sample_means = numpy.loadtxt(fname=sample_means_file_path, dtype='float', delimeter=',')
-    standard_errors = numpy.loadtxt(fname=standard_errors_file_path, dtype='float', delimeter=',')
+    sample_means = numpy.loadtxt(fname=sample_means_file_path, dtype='float', delimiter=',')
+    standard_errors = numpy.loadtxt(fname=standard_errors_file_path, dtype='float', delimiter=',')
 
     # Plot the points and their error bars
     thickness = 2
-    plt.errorbar(message_delays, sample_means - 500, yerr=standard_errors - 330,
+    plt.errorbar(message_delays, sample_means[0], yerr=z_score * standard_errors[0],
                  fmt='o', markersize=thickness * 3, capsize=thickness * 2, capthick=thickness,
                  label='End-to-End Delay', linewidth=thickness, color='red')
-    plt.errorbar(message_delays, sample_means - 550, yerr=standard_errors - 335,
+    plt.errorbar(message_delays, sample_means[1], yerr=z_score * standard_errors[1],
                  fmt='o', markersize=thickness * 3, capsize=thickness * 2, capthick=thickness,
                  label='In-System Delay', linewidth=thickness, color='blue')
 
@@ -29,4 +30,5 @@ if __name__ == '__main__':
     plt.ylabel('Average Response Time (ms)')
     plt.grid(True, linewidth=1)
     plt.legend()
+    plt.savefig(graph_file_path)
     plt.show()
