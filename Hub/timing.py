@@ -17,6 +17,7 @@ import datetime
 import time
 import boto3
 import os
+import sys
 from hub_common import initialize_ports, connect_to_bluetooth, interpret_command_payload
 from car_manager import car_manager
 
@@ -93,7 +94,7 @@ def mock_bluetooth_messenger(delay_, car_index_, mac_address_):
 
     # Record our results
     start_times_.to_csv(start_times_file_path.format(car_index_), index=False)
-    exit(0)
+    sys.exit(0)
 
 
 # Subprocess for sending periodic messages to an individual car
@@ -145,7 +146,7 @@ def bluetooth_messenger(delay_, car_index_, mac_address_):
 
     # Record our results
     start_times_.to_csv(start_times_file_path.format(car_index_), index=False)
-    exit(0)
+    sys.exit(0)
 
 
 # Used for testing without the cars
@@ -169,7 +170,7 @@ def mock_sqs_messenger(delay_):
 
     # Record our results
     start_times_.to_csv(start_times_file_path.format('E2E'), index=False)
-    exit(0)
+    sys.exit(0)
 
 
 # Subprocess for reading responses from cars
@@ -214,7 +215,7 @@ def sqs_messenger(delay_):
 
     # Record our results
     start_times_.to_csv(start_times_file_path.format('E2E'), index=False)
-    exit(0)
+    sys.exit(0)
 
 
 if __name__ == '__main__':
@@ -340,7 +341,7 @@ if __name__ == '__main__':
 
             # Cleanup sockets
             for process in car_managers:
-                process.kill()
+                process.terminate()
 
     # Write our results
     numpy.savetxt(fname=sample_means_file_path, X=sample_means, delimiter=',')
