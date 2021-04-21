@@ -21,15 +21,15 @@ from hub_common import initialize_ports, connect_to_bluetooth, interpret_command
 from car_manager import car_manager
 
 # Number of commands to send to each car
-n = 10  # 100?
+n = 20  # 100?
 
 # Z score for 95% confidence interval
 z_score = 1.96
 
 # Variables for intervals
 starting_delay = 1000
-ending_delay = 50
-number_of_delays = 6  # 20
+ending_delay = 100
+number_of_delays = 10  # 20
 message_delays = numpy.linspace(start=starting_delay, stop=ending_delay, num=number_of_delays)
 
 # MAC addresses of the connected cars
@@ -104,8 +104,13 @@ def bluetooth_messenger(delay_, car_index_, mac_address_):
     # Table for measuring response times from the cars
     start_times_ = pandas.DataFrame(index=numpy.arange(n), columns=[car_names[car_index_]], dtype='datetime64')
 
-    # Connect to the cars with a customization command
-    bluetooth_socket = connect_to_bluetooth(mac_address_)
+    # Connect to the cars
+    bluetooth_socket = None
+    while bluetooth_socket is None:
+        try:
+            bluetooth_socket = connect_to_bluetooth(mac_address_)
+        except ConnectionError:
+            pass
 
     # Keep looping until all responses have been received
     messages_sent = 0
@@ -257,7 +262,7 @@ if __name__ == '__main__':
                 # Give the car managers time to connect to the cars
                 time.sleep(5)
 
-                # Create the subprocess for reading responses from the cars
+                # Create the subprocess for sending messages to the cars
                 messengers = [multiprocessing.Process(target=sqs_messenger,
                                                       kwargs={'delay_': message_delay},
                                                       daemon=True)]
@@ -266,7 +271,7 @@ if __name__ == '__main__':
                 car_managers = []
                 messengers = []
                 for car_index, mac_address in enumerate(mac_addresses):
-                    # Create subprocess for relaying commands to the cars from SQS
+                    # Create the subprocess for sending messages to the cars
                     messengers.append(multiprocessing.Process(target=bluetooth_messenger,
                                                               kwargs={'delay_': message_delay,
                                                                       'car_index_': car_index,
@@ -330,8 +335,8 @@ if __name__ == '__main__':
             sample_means[x][i] = delays.mean(axis=None)
             # standard_error_of_the_mean = numpy.sqrt((((delays - sample_mean) ** 2).sum() / (N - 1)) / N)
             standard_errors[x][i] = stats.sem(a=delays, axis=None)
-            print('Message Delay: {}\nSample Mean: {}\nStandard Error: {}'
-                  .format(message_delay, sample_means[x][i], standard_errors[x][i]))
+            print('{} Message Delay: {}\nSample Mean: {}\nStandard Error: {}'
+                  .format('E2E' if x == 0 else 'BT', message_delay, sample_means[x][i], standard_errors[x][i]))
 
             # Cleanup sockets
             for process in car_managers:

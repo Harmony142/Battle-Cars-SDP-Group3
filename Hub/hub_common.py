@@ -199,7 +199,7 @@ def initialize_ports():
     :returns:
         A list of the serial ports available on the system
     """
-    bluetooth_com_ports = [4, 7, 16, 17]
+    bluetooth_com_ports = [4, 7, 16, 17, 21, 22, 23, 24]
     if sys.platform.startswith('win'):
         ports = set(['COM%s' % (i + 1) for i in range(30)]) - \
                 set(['COM{}'.format(i) for i in bluetooth_com_ports])
