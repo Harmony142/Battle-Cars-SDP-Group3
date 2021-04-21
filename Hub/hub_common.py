@@ -122,7 +122,7 @@ def initialize_dynamodb_client():
         aws_secret_access_key='5QNTnr8kQhJ0U0cdz6cku7mKkLNLK9sVb0BxnEz2')
 
 
-def push_game_state_to_database(dynamodb_client, score_red, score_blue, time_left):
+def push_game_state_to_database(dynamodb_client, score_red, score_blue, time_left, winner, overtime):
     table_name = 'BattleCarsScore'
 
     attribute_updates = {
@@ -139,6 +139,16 @@ def push_game_state_to_database(dynamodb_client, score_red, score_blue, time_lef
         'time_left': {
             'Value': {
                 'S': str.join(':', str(time_left).split('.')[0].split(':')[1:])
+            }
+        },
+        'winner': {
+            'Value': {
+                'S': winner
+            }
+        },
+        'overtime': {
+            'Value': {
+                'BOOL': overtime
             }
         }
     }

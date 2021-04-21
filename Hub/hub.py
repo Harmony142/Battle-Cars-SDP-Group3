@@ -47,40 +47,50 @@ if __name__ == '__main__':
     # Score keeping setup
     ports = initialize_ports()
     score_red, score_blue = 0, 0
-    set_score_hot_key = 'p'
+    set_state_hot_key = 'q'
+    reset_car_hot_key = 'w'
+
+    winner = ''
+    overtime = False
 
     # Timing
-    game_time = 20  # Minutes
+    game_time = datetime.timedelta(minutes=5)
+    overtime_duration = datetime.timedelta(minutes=1)
+    time_before_reset = datetime.timedelta(seconds=7)
     time_between_updates = datetime.timedelta(seconds=1)
     previous_update_time = datetime.datetime.now()
-    end_time = previous_update_time + datetime.timedelta(minutes=game_time)
+    end_time = previous_update_time + game_time
 
     car_managers = []
 
 
-    def reset(client):
-        # Get the global variables instead of making new local ones
-        global score_red, score_blue, end_time, car_managers
-
-        # Reset the score
-        score_red, score_blue = 0, 0
+    def reset_car_manager(car_index=None):
+        global car_managers
+        car_indices = [car_index] if car_index is not None else range(len(mac_addresses))
 
         # Restart the car managers
-        for process in car_managers:
-            process.kill()
+        for car_index in car_indices:
+            car_managers[car_index].kill()
+            car_managers[car_index] = multiprocessing.Process(target=car_manager,
+                                                              kwargs={'car_number': str(car_index + 1),
+                                                                      'mac_address': mac_addresses[car_index]},
+                                                              daemon=True)
+            car_managers[car_index].start()
 
-        car_managers = []
-        for i, mac_address in enumerate(mac_addresses):
-            car_managers.append(multiprocessing.Process(target=car_manager,
-                                                        kwargs={'car_number': str(i + 1), 'mac_address': mac_address},
-                                                        daemon=True))
-            car_managers[-1].start()
 
-        # Reset the timer
-        end_time = datetime.datetime.now() + datetime.timedelta(minutes=game_time)
+    def reset(client):
+        # Get the global variables instead of making new local ones
+        global score_red, score_blue, end_time, winner, overtime
+
+        # Reset the game state
+        score_red, score_blue = 0, 0
+        end_time = datetime.datetime.now() + game_time
+        winner = ''
+        overtime = False
+        reset_car_manager()
 
         # Push everything to the database
-        push_game_state_to_database(client, score_red, score_blue, end_time - datetime.datetime.now())
+        push_game_state_to_database(client, score_red, score_blue, end_time - datetime.datetime.now(), winner, overtime)
 
 
     reset(dynamodb_client)
@@ -98,12 +108,90 @@ if __name__ == '__main__':
         # Update database once a second for timer and car ownership
         if previous_update_time + time_between_updates < datetime.datetime.now():
             previous_update_time = datetime.datetime.now()
-            push_game_state_to_database(dynamodb_client, score_red, score_blue, end_time - previous_update_time)
 
-        # TODO make an automated version of this
-        if keyboard.is_pressed(set_score_hot_key):
+            # End the game immediately if a goal is scored during overtime
+            if overtime and score_red != score_blue:
+                end_time = previous_update_time
+
+            # Check for special game states
+            if (end_time - previous_update_time).total_seconds() <= 0:
+                if winner != '':
+                    # Reset the game now that the time before reset is over
+                    reset(dynamodb_client)
+                elif overtime:
+                    # Overtime is over! Draw if scores are still the same
+                    if score_red != score_blue:
+                        # Wait before resetting so the web page can render the victory
+                        winner = 'Red Team' if score_red > score_blue else 'Blue Team'
+                        end_time += time_before_reset
+                else:
+                    # Normal game time is over! Check if we need to go to overtime, otherwise decide our winner
+                    if score_red == score_blue:
+                        # Extend the match for sudden death in overtime
+                        overtime = True
+                        end_time += overtime_duration
+                    else:
+                        # Wait before resetting so the web page can render the victory
+                        winner = 'Red Team' if score_red > score_blue else 'Blue Team'
+                        end_time += time_before_reset
+
+            push_game_state_to_database(dynamodb_client, score_red, score_blue,
+                                        end_time - previous_update_time, winner, overtime)
+
+        # Manual control for setting the game state
+        if keyboard.is_pressed(set_state_hot_key):
             # Switch toggle and wait until key is not pressed
-            print("Resetting Score")
-            score_red, score_blue = input('New Red Score: '), input('New Blue Score: ')
-            while keyboard.is_pressed(set_score_hot_key):
-                pass
+            print('Setting Game State')
+            try:
+                try:
+                    red_score = int(input('New Red Score [non neg int]: '))
+                except ValueError:
+                    raise ValueError('Red Score must be a number')
+                if red_score < 0:
+                    raise ValueError('Red Score must be a non-negative integer')
+
+                try:
+                    blue_score = int(input('New Blue Score [non-neg int]: '))
+                except ValueError:
+                    raise ValueError('Blue Score must be a number')
+                if blue_score < 0:
+                    raise ValueError('Blue Score must be a non-negative integer')
+
+                time_left = input('Time Left [min:non-neg sec]: ').split(':')
+                try:
+                    minutes, seconds = [int(value) for value in time_left]
+                except (ValueError, TypeError):
+                    raise ValueError('Time Left must be in format "minutes:non-negative seconds')
+
+                sudden_death = input('Overtime [Y, N]: ')
+                if sudden_death not in ['Y', 'N']:
+                    raise ValueError('Overtime must be Y or N')
+                sudden_death = True if sudden_death == 'Y' else 'N'
+
+                win = input('Winner [N, R, B, D]: ')
+                if win not in ['N', 'R', 'B', 'D']:
+                    raise ValueError('Winner must be N(one), R(ed), B(lue), or D(raw)')
+                win = 'Red Team' if win == 'R' else 'Blue Team' if win == 'B' else 'Draw' if win == 'D' else ''
+
+                # All values are valid at this point
+                score_red = red_score
+                score_blue = blue_score
+                end_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes, seconds=seconds)
+                overtime = sudden_death
+                winner = win
+
+            except ValueError as e:
+                print(e)
+                print('Cancelling setting the state')
+
+        # Manual control for resetting cars
+        if keyboard.is_pressed(reset_car_hot_key):
+            # Switch toggle and wait until key is not pressed
+            values = list(range(1, len(mac_addresses) + 1))
+            values.append('all')
+            reset = input('Reset car [{}]: '.format(values))
+            if reset in values:
+                reset_car_manager(int(reset) - 1 if reset.isnumeric() else None)
+            else:
+                print('ValueError: Value mus be in [{}]'.format(values))
+                print('Cancelling resetting a car')
