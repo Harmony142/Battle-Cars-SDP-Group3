@@ -83,7 +83,6 @@ const PlayingWindow = (props) => {
 
       // Send user commands to our SQS queue to be read and processed by the hub
       const payload = JSON.parse(JSON.stringify(currKeysPressed));
-      payload['StartTime'] = Date.now();
       payload['PlayerName'] = playerName === '' ? null : playerName;
 
       pushToSQS(payload);
@@ -93,7 +92,6 @@ const PlayingWindow = (props) => {
 
   const sendCustomizationData = (event) => {
     const payload = JSON.parse(JSON.stringify(currKeysPressed));
-    payload['StartTime'] = Date.now();
     payload['PlayerName'] = playerName === '' ? null : playerName;
     payload['Pattern'] = document.getElementById('dropup-button').innerHTML;
     payload['Red'] = document.getElementById('red-slider').value;

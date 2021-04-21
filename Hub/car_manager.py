@@ -22,7 +22,7 @@ def car_manager(car_number, mac_address):
 
     while 1:
         # Read from SQS
-        command_flags, start_time, command_player_name, customization_data = read_from_sqs(sqs_client, car_number)
+        command_flags, command_player_name, customization_data = read_from_sqs(sqs_client, car_number)
         
         if command_player_name is not None and active_player_name is None:
             # Claim a car and update the database

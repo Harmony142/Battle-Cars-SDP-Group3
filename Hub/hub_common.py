@@ -92,13 +92,13 @@ def read_from_sqs(sqs_client, car_number):
                 **{k: int(payload[k]) for k in customization_keys[1:]}
             }
 
-        return cmd_flags, payload['StartTime'], player_name, customization_data
+        return cmd_flags, player_name, customization_data
     except KeyError:
         pass
     except IndexError:
         pass
 
-    return None, None, None, None
+    return None, None, None
 
 
 def initialize_dynamodb_client():
