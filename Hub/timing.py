@@ -212,7 +212,7 @@ if __name__ == '__main__':
 
                 # Create the subprocess for reading responses from the cars
                 messengers = [multiprocessing.Process(target=sqs_messenger,
-                                                      kwargs={'delay': message_delay},
+                                                      kwargs={'delay_': message_delay},
                                                       daemon=True)]
                 messengers[0].start()
             else:
@@ -220,9 +220,9 @@ if __name__ == '__main__':
                 for car_index, mac_address in enumerate(mac_addresses):
                     # Create subprocess for relaying commands to the cars from SQS
                     car_managers.append(multiprocessing.Process(target=bluetooth_messenger,
-                                                                kwargs={'delay': message_delay,
-                                                                        'car_number': car_numbers[car_index],
-                                                                        'mac_address': mac_address},
+                                                                kwargs={'delay_': message_delay,
+                                                                        'car_number_': car_numbers[car_index],
+                                                                        'mac_address_': mac_address},
                                                                 daemon=True))
                     car_managers[-1].start()
 

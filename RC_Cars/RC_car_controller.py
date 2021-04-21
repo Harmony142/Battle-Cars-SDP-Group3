@@ -311,11 +311,11 @@ while True:
         4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
         6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
         """
-        ensuing_customiztion = (command_flags & (0b1 << 2)) >> 2
+        ensuing_customization = (command_flags & (0b1 << 2)) >> 2
 
         # Check if we need to read customization data
         customization_data = []
-        if ensuing_customiztion:
+        if ensuing_customization:
             # print('Waiting for customization data')
             # Customization data comes over bluetooth one byte at a time in the order Pattern - R - G - B
             while len(customization_data) < 4:
@@ -325,8 +325,10 @@ while True:
                     customization_data.append(int.from_bytes(packet, 'little'))
 
         # Customization Control
-        if ensuing_customiztion:
+        if ensuing_customization:
             initialize_pattern(customization_data[0], tuple(customization_data[1:]))
+        else:
+            print('Message Received by Car', car_index)
 
         # Car Controls
         forward_backwards = (command_flags & (0b11 << 4)) >> 4
