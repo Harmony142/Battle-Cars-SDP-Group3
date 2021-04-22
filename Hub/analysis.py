@@ -33,7 +33,7 @@ if __name__ == '__main__':
     fig.suptitle('Average Response Time for {} Messages'.format(n), fontsize=32)
     ax1.set_title('End-to-End Delay')
     ax2.set_title('In-System Delay')
-    ax1.set(xlabel='Time Between Messages (ms)', ylabel='Average Response Time (ms)')
+    ax1.set(ylabel='Average Response Time (ms)')
     ax2.set(xlabel='Time Between Messages (ms)', ylabel='Average Response Time (ms)')
     ax1.grid(True, linewidth=1)
     ax2.grid(True, linewidth=1)
