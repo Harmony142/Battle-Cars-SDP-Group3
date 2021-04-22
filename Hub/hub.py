@@ -1,8 +1,9 @@
 
+import multiprocessing
 import datetime
 import keyboard
-from hub_common import connect_to_bluetooth, initialize_sqs_client, read_from_sqs,\
-    initialize_dynamodb_client, push_to_database, read_keyboard_commands, initialize_ports
+from hub_common import initialize_dynamodb_client, push_game_state_to_database, initialize_ports
+from car_manager import car_manager
 
 """
 ----- TO INSTALL PYBLUEZ ON WINDOWS -----
@@ -19,134 +20,182 @@ git clone https://github.com/pybluez/pybluez
 cd pybluez
 <conda env file>/python.exe setup.py install
 """
-# Initialize the client for streaming user commands from SQS
-sqs_client = initialize_sqs_client()
-
-# Initialize the client for sending the score back to users
-dynamodb_client = initialize_dynamodb_client()
-
-# TODO test if updates only happen on state change
-# TODO test if boost bug is fixed
-# TODO test if WASD bug is fixed
-# TODO make boost always available, but you can't steer while it's active
-# TODO make the match only start when all 4 players have joined
-# TODO check that the timer works
-
-# List of cars in the format [device name, MAC address, socket, player_name, previous_command_flags]
-targets = [
-    ['HC-06', '20:20:03:19:06:58', None, None, 0x00],
-    ['HC-06', '20:20:03:19:31:96', None, None, 0x00]
-]
 
 # Car PCB 1: 20:20:03:19:06:58
 # Car PCB 2: 20:20:03:19:31:96
-# TODO update the command flags scheme to allow customization
-# Try reconnecting if it fails to connect or the connection is lost
-previous_command_flags = 0x00
 
-keyboard_override_hot_key = 't'
-keyboard_override = False
+if __name__ == '__main__':
+    # Parameters for car managers, needs MAC Address and (access key ID, secret access key) for respective SQS queue
+    mac_addresses = [
+        # '20:20:03:19:06:58',
+        # '20:20:03:19:31:96',
+        '98:D3:32:11:0B:77',
+        # '20:20:03:19:10:31'
+    ]
 
-# Score keeping setup
-ports = initialize_ports()
-score_red, score_blue = 0, 0
-set_score_hot_key = 'p'
+    # Initialize the client for sending the score and timer to the players
+    dynamodb_client = initialize_dynamodb_client()
 
+    # TODO test if updates only happen on state change
+    # TODO test if boost bug is fixed
+    # TODO test if WASD bug is fixed
+    # TODO make boost always available, but you can't steer while it's active
+    # TODO make the match only start when all 4 players have joined
+    # TODO check that the timer works
+    # TODO update the command flags scheme to allow customization
 
-# Timing
-game_time = 20  # Minutes
-time_between_updates = datetime.timedelta(seconds=1)
-previous_update_time = datetime.datetime.now()
-end_time = previous_update_time + datetime.timedelta(minutes=game_time)
-
-
-def reset(client):
-    # Get the global variables instead of making new local ones
-    global score_red, score_blue, end_time
-
-    # Reset the score
+    # Score keeping setup
+    ports = initialize_ports()
     score_red, score_blue = 0, 0
+    set_state_hot_key = 'q'
+    reset_car_hot_key = 'w'
 
-    # Remove players from the cars
-    for target in targets:
-        target[3] = None
+    winner = ''
+    overtime = False
 
-    # Reset the timer
-    end_time = datetime.datetime.now() + datetime.timedelta(minutes=game_time)
+    # Timing
+    game_time = datetime.timedelta(minutes=5)
+    overtime_duration = datetime.timedelta(minutes=1)
+    time_before_reset = datetime.timedelta(seconds=7)
+    time_between_updates = datetime.timedelta(seconds=1)
+    previous_update_time = datetime.datetime.now()
+    end_time = previous_update_time + game_time
 
-    # Push everything to the database
-    push_to_database(dynamodb_client, score_red, score_blue, end_time - datetime.datetime.now(), targets)
+    car_managers = [None] * len(mac_addresses)
 
 
-while True:
-    # Check if a goal is trying to send us a score
-    for port in ports:
-        if port.in_waiting:
-            line = port.readline().decode('utf-8').strip()
-            for team in ['RED', 'BLUE']:
-                if line == 'GOAL ' + team:
-                    globals()['score_' + team.lower()] += 1
-                    print(line, '\nRED:', score_red, '\nBLUE:', score_blue)
+    def reset_car_manager(car_index=None):
+        global car_managers
+        car_indices = [car_index] if car_index is not None else range(len(mac_addresses))
 
-    # Update database once a second for timer and car ownership
-    if previous_update_time + time_between_updates < datetime.datetime.now():
-        previous_update_time = datetime.datetime.now()
-        push_to_database(dynamodb_client, score_red, score_blue,
-                         end_time - previous_update_time, targets)
+        # Restart the car managers
+        for car_index in car_indices:
+            if car_managers[car_index] is not None:
+                car_managers[car_index].terminate()
+            car_managers[car_index] = multiprocessing.Process(target=car_manager,
+                                                              kwargs={'car_number': str(car_index + 1),
+                                                                      'mac_address': mac_addresses[car_index]},
+                                                              daemon=True)
+            car_managers[car_index].start()
 
-    # TODO make an automated version of this
-    if keyboard.is_pressed(set_score_hot_key):
-        # Switch toggle and wait until key is not pressed
-        print("Resetting Score")
-        score_red, score_blue = input('New Red Score: '), input('New Blue Score: ')
-        push_to_database(dynamodb_client, score_red, score_blue, end_time - datetime.datetime.now(), targets)
-        while keyboard.is_pressed(set_score_hot_key):
-            pass
 
-    # Toggle for keyboard override. If you want to control from the hub directly
-    if keyboard.is_pressed(keyboard_override_hot_key):
-        # Switch toggle and wait until key is not pressed
-        keyboard_override = not keyboard_override
-        print("Toggled keyboard override: ", "on" if keyboard_override else "off")
-        while keyboard.is_pressed(keyboard_override_hot_key):
-            pass
+    def reset(client):
+        # Get the global variables instead of making new local ones
+        global score_red, score_blue, end_time, winner, overtime
 
-    # Read from different control sources
-    command_flags = 0x00
+        # Reset the game state
+        score_red, score_blue = 0, 0
+        end_time = datetime.datetime.now() + game_time
+        winner = ''
+        overtime = False
+        reset_car_manager()
 
-    # Read keyboard commands
-    if keyboard_override:
-        source_string = 'Keyboard'
-        # Keyboard command only ever controls car 1
-        command_flags = read_keyboard_commands()
-    else:
-        source_string = 'SQS'
-        command_flags, start_time = read_from_sqs(sqs_client, targets)
+        # Push everything to the database
+        push_game_state_to_database(client, score_red, score_blue, end_time - datetime.datetime.now(), winner, overtime)
 
-    # Send the data over bluetooth if the state for the designated car has changed
-    if command_flags is not None and command_flags != targets[command_flags & 0b11][4]:
-        """
-        Bit Positions
-        76543210
-        0-1: Car Number
-        2: Unused currently
-        3: Boost Enabled
-        4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
-        6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
-        """
-        # print('Sending {0:#010b} from {1}'.format(command_flags, source_string))
 
-        for target in targets:
+    reset(dynamodb_client)
+
+    while True:
+        # Check if a goal is trying to send us a score
+        for port in ports:
+            if port.in_waiting:
+                line = port.readline().decode('utf-8').strip()
+                for team in ['RED', 'BLUE']:
+                    if line == 'GOAL ' + team:
+                        globals()['score_' + team.lower()] += 1
+                        print(line, '\nRED:', score_red, '\nBLUE:', score_blue)
+
+        # Update database once a second for timer and car ownership
+        if previous_update_time + time_between_updates < datetime.datetime.now():
+            previous_update_time = datetime.datetime.now()
+
+            # End the game immediately if a goal is scored during overtime
+            if overtime and score_red != score_blue:
+                end_time = previous_update_time
+
+            # Check for special game states
+            if (end_time - previous_update_time).total_seconds() <= 0:
+                if winner != '':
+                    # Reset the game now that the time before reset is over
+                    reset(dynamodb_client)
+
+                elif overtime:
+                    # Overtime is over! Draw if scores are still the same
+                    # Wait before resetting so the web page can render the victory
+                    winner = 'Red Team' if score_red > score_blue else 'Blue Team' if score_blue > score_red else 'Draw'
+                    end_time += time_before_reset
+
+                else:
+                    # Normal game time is over! Check if we need to go to overtime, otherwise decide our winner
+                    if score_red == score_blue:
+                        # Extend the match for sudden death in overtime
+                        overtime = True
+                        end_time += overtime_duration
+                    else:
+                        # Wait before resetting so the web page can render the victory
+                        winner = 'Red Team' if score_red > score_blue else 'Blue Team'
+                        end_time += time_before_reset
+
+            push_game_state_to_database(dynamodb_client, score_red, score_blue,
+                                        end_time - previous_update_time, winner, overtime)
+
+        # Manual control for setting the game state
+        if keyboard.is_pressed(set_state_hot_key):
+            # Switch toggle and wait until key is not pressed
+            print('Setting Game State')
             try:
-                if target[2] is None:
-                    raise OSError('Socket does not exist')
-                print('Sending {0:#010b} from {1}'.format(command_flags, source_string))
-                target[2].send(command_flags.to_bytes(1, "little"))
-            except OSError:
-                print('Disconnected from {}, attempting to reconnect'.format(target[0]))
                 try:
-                    connect_to_bluetooth(target)
-                except ConnectionError as e:
-                    print(e)
+                    red_score = int(input('New Red Score [non neg int]: '))
+                except ValueError:
+                    raise ValueError('Red Score must be a number')
+                if red_score < 0:
+                    raise ValueError('Red Score must be a non-negative integer')
 
-        targets[command_flags & 0b11][4] = command_flags
+                try:
+                    blue_score = int(input('New Blue Score [non-neg int]: '))
+                except ValueError:
+                    raise ValueError('Blue Score must be a number')
+                if blue_score < 0:
+                    raise ValueError('Blue Score must be a non-negative integer')
+
+                time_left = input('Time Left [min:non-neg sec]: ').split(':')
+                try:
+                    minutes, seconds = [int(value) for value in time_left]
+                except (ValueError, TypeError):
+                    raise ValueError('Time Left must be in format "minutes:non-negative seconds')
+
+                sudden_death = input('Overtime [Y, N]: ')
+                if sudden_death not in ['Y', 'N']:
+                    raise ValueError('Overtime must be Y or N')
+                sudden_death = sudden_death == 'Y'
+
+                win = input('Winner [N, R, B, D]: ')
+                if win not in ['N', 'R', 'B', 'D']:
+                    raise ValueError('Winner must be N(one), R(ed), B(lue), or D(raw)')
+                win = 'Red Team' if win == 'R' else 'Blue Team' if win == 'B' else 'Draw' if win == 'D' else ''
+
+                # All values are valid at this point
+                print('Setting game state')
+                score_red = red_score
+                score_blue = blue_score
+                end_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes, seconds=seconds)
+                overtime = sudden_death
+                winner = win
+
+            except ValueError as e:
+                print(e)
+                print('Cancelling setting game state')
+
+        # Manual control for resetting cars
+        if keyboard.is_pressed(reset_car_hot_key):
+            # Switch toggle and wait until key is not pressed
+            values = [str(i) for i in range(1, len(mac_addresses) + 1)]
+            values.append('all')
+            reset = input('Reset car {}: '.format(values))
+            if reset in values:
+                print('Resetting Cars')
+                reset_car_manager(int(reset) - 1 if reset.isnumeric() else None)
+            else:
+                print('ValueError: Value mus be in {}'.format(values))
+                print('Cancelling resetting a car')

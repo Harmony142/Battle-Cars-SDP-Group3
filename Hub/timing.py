@@ -1,10 +1,19 @@
 
-import keyboard
-from hub_common import connect_to_bluetooth, initialize_sqs_client, read_from_sqs,\
-    read_keyboard_commands, read_controller_commands, initialize_ports
+# TODO game stuff: Win Screen, Overtime, 5 min games, automatic reset, manual reset for car 1, 2, 3, 4, or all,
+# TODO             manual reset for team scores and timer
+
+# TODO timing stuff: calculate n using stats, loop over a range of values for message_rate, graph confidence intervals
+# TODO                for each message_rate, one line for using SQS and one for just in system
+
+# TODO testing stuff: try out testing script, test game stuff
+
+import uuid
+import numpy
+import pandas
+from scipy import stats
+import json
+import multiprocessing
 import datetime
-<<<<<<< Updated upstream
-=======
 import time
 import boto3
 import os
@@ -13,76 +22,11 @@ from hub_common import initialize_ports, connect_to_bluetooth, interpret_command
 from car_manager import car_manager
 
 # Number of commands to send to each car
-n = 50  # 100?
->>>>>>> Stashed changes
+n = 20  # 100?
 
-# Initialize the client for streaming user commands from SQS
-sqs_client = initialize_sqs_client()
+# Z score for 95% confidence interval
+z_score = 1.96
 
-<<<<<<< Updated upstream
-# List of cars in the format [device name, MAC address, socket]
-targets = [
-    ['HC-06', '20:20:03:19:06:58', None]
-]
-
-# 20:20:03:19:06:58
-previous_command_flags = 0x00
-
-# Score keeping setup
-ports = initialize_ports()
-score_blue, score_red = 0, 0
-
-while True:
-    # Read from different control sources
-    command_flags = 0x00
-    source_string = 'Controller'
-    try:
-        # Raises index error if a controller is not found
-        command_flags = read_controller_commands()
-    except IndexError:
-        # Read keyboard commands since we couldn't find a controller
-        source_string = 'SQS'
-        command_flags, start_time = read_from_sqs(sqs_client)
-        sqs_read_time = datetime.datetime.now().timestamp() * 1000
-
-    # Send the data over bluetooth if the state has changed
-    if command_flags is not None and command_flags != previous_command_flags:
-        """
-        Bit Positions
-        76543210
-        0-1: Car Number
-        2: Unused currently
-        3: Boost Enabled
-        4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
-        6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
-        """
-        for target in targets:
-            try:
-                if target[2] is None:
-                    raise OSError('Socket does not exist')
-                target[2].send(command_flags.to_bytes(1, "little"))
-                print('Sending {0:#010b} from {1}'.format(command_flags, source_string))
-
-                # Wait until PCB responds
-                message_received = None
-                while message_received is None:
-                    for port in ports:
-                        if port.in_waiting:
-                            line = port.readline().decode('utf-8').strip()
-                            if line == 'Message Received':
-                                message_received = line
-
-                current_time = datetime.datetime.now().timestamp() * 1000
-                print('End to end time:', current_time - start_time, 'ms')
-
-            except OSError:
-                print('Disconnected from {}, attempting to reconnect'.format(target[0]))
-                try:
-                    connect_to_bluetooth(target)
-                except ConnectionError as e:
-                    print(e)
-        previous_command_flags = command_flags
-=======
 # Variables for intervals
 starting_delay = 1000
 ending_delay = 100
@@ -91,10 +35,10 @@ message_delays = numpy.linspace(start=starting_delay, stop=ending_delay, num=num
 
 # MAC addresses of the connected cars
 mac_addresses = [
-    '20:20:03:19:06:58',
     '20:20:03:19:31:96',
     '98:D3:32:11:0B:77',
-    '20:20:03:19:10:31'
+    # '20:20:03:19:06:58',
+    # '20:20:03:19:10:31'
 ]
 
 # Lists for maintaining car indices, numbers, and names
@@ -169,9 +113,6 @@ def bluetooth_messenger(delay_, car_index_, mac_address_):
         except ConnectionError:
             pass
 
-    # Give the main process time to start reading
-    time.sleep(5)
-
     # Keep looping until all responses have been received
     messages_sent = 0
     next_message_time = datetime.datetime.now()
@@ -202,9 +143,6 @@ def bluetooth_messenger(delay_, car_index_, mac_address_):
             # Wait until it's time to send another message
             next_message_time = datetime.datetime.now() + message_rate
             messages_sent += 1
-
-    # Make sure bluetooth finishes sending
-    time.sleep(3)
 
     # Record our results
     start_times_.to_csv(start_times_file_path.format(car_index_), index=False)
@@ -243,9 +181,6 @@ def sqs_messenger(delay_):
     # Table for measuring response times from the cars
     start_times_ = pandas.DataFrame(index=numpy.arange(n), columns=car_names, dtype='datetime64')
 
-    # Give the main process time to start reading
-    time.sleep(5)
-
     # Keep looping until all responses have been received
     messages_sent = 0
     next_message_time = datetime.datetime.now()
@@ -277,9 +212,6 @@ def sqs_messenger(delay_):
             # Wait until it's time to send another message
             next_message_time = datetime.datetime.now() + message_rate
             messages_sent += 1
-
-    # Make sure everything finishes sending
-    time.sleep(3)
 
     # Record our results
     start_times_.to_csv(start_times_file_path.format('E2E'), index=False)
@@ -369,9 +301,9 @@ if __name__ == '__main__':
                         # Check if a car is responding to a message
                         line = port.readline().decode('utf-8').strip()
                         if line.startswith('Message Received by Car '):
+                            print(line)
                             # Strip the car index from the message
                             car_index = int(line.split()[-1])
-                            print('Car {} received message'.format(car_index), response_indices[car_index])
 
                             # Record the response time
                             response_times.at[
@@ -415,4 +347,3 @@ if __name__ == '__main__':
     numpy.savetxt(fname=sample_means_file_path, X=sample_means, delimiter=',')
     numpy.savetxt(fname=standard_errors_file_path, X=standard_errors, delimiter=',')
     print('Total Script Running Time:', datetime.datetime.now() - timing_script_start_time)
->>>>>>> Stashed changes

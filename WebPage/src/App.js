@@ -15,6 +15,9 @@ var car2PlayerName = '';
 var car3PlayerName = '';
 var car4PlayerName = '';
 
+var winner = '';
+var overtime = false;
+
 const AWS = require('aws-sdk');
 const dynamoDB = new AWS.DynamoDB({
     accessKeyId: 'AKIAY563PRYUZGQH44NH',
@@ -43,8 +46,8 @@ document.interval = setInterval(() => {
 
         // Update the score
         try {
-          scoreRed = item.score_red.N;
-          scoreBlue = item.score_blue.N;
+          scoreRed = parseInt(item.score_red.N);
+          scoreBlue = parseInt(item.score_blue.N);
         } catch(err) {
           console.log("could not update score");
         }
@@ -63,6 +66,18 @@ document.interval = setInterval(() => {
           }
         } catch(err) {
           console.log("could not update player names");
+        }
+
+        try {
+          winner = item.winner.S;
+        } catch(err) {
+          console.log("could not update winner");
+        }
+
+        try {
+          overtime = item.overtime.BOOL;
+        } catch(err) {
+          console.log("could not update overtime");
         }
       } catch(err) {
         console.log("could not retrieve item from response");
@@ -84,4 +99,4 @@ function App() {
 }
 
 export default App;
-export { scoreRed, scoreBlue, timer, car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName };
+export { scoreRed, scoreBlue, timer, car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName, winner, overtime };
