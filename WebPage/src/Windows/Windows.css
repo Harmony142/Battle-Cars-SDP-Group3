@@ -31,6 +31,24 @@
     bottom: 105px;
 }
 
+.victory-card {
+    position: relative;
+    display: block;
+    margin: auto;
+    margin-top: 30px;
+    width: 450px;
+    text-align: center;
+    font-size: 50px;
+    z-index: 1;
+
+    visibility: hidden;
+    background: firebrick;
+
+    border-style: solid;
+    border-color: black;
+    border-width: 5px;
+}
+
 .screen-wrapper {
     position: absolute;
     left: 2%;
@@ -47,9 +65,11 @@
 
 .car-window-name {
     position: absolute;
+    margin: 0px;
     width: 0px;
     color: white;
     white-space: nowrap;
+    font-size: 24px;
 }
 
 .new-message-input-field {
@@ -106,6 +126,17 @@
     left: 220px;
     bottom: 6px;
 }
+
+.overtime-flag {
+    position: absolute;
+    margin: 0px;
+    left: 224px;
+    bottom: 38px;
+
+    visibility: hidden;
+    font-size: 16px;
+}
+
 
 .controls-wrapper {
     position: absolute;
