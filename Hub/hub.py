@@ -2,8 +2,12 @@
 import multiprocessing
 import datetime
 import keyboard
+import logging
 from hub_common import initialize_dynamodb_client, push_game_state_to_database, initialize_ports
 from car_manager import car_manager
+
+# Set the logging level
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
 """
 ----- TO INSTALL PYBLUEZ ON WINDOWS -----
@@ -104,7 +108,7 @@ if __name__ == '__main__':
                 for team in ['RED', 'BLUE']:
                     if line == 'GOAL ' + team:
                         globals()['score_' + team.lower()] += 1
-                        print(line, '\nRED:', score_red, '\nBLUE:', score_blue)
+                        logging.info('{}\nRED: {}\nBLUE: {}'.format(line, score_red, score_blue))
 
         # Update database once a second for timer and car ownership
         if previous_update_time + time_between_updates < datetime.datetime.now():
@@ -143,7 +147,7 @@ if __name__ == '__main__':
         # Manual control for setting the game state
         if keyboard.is_pressed(set_state_hot_key):
             # Switch toggle and wait until key is not pressed
-            print('Setting Game State')
+            logging.warning('Setting Game State')
             try:
                 try:
                     red_score = int(input('New Red Score [non neg int]: '))
@@ -176,7 +180,7 @@ if __name__ == '__main__':
                 win = 'Red Team' if win == 'R' else 'Blue Team' if win == 'B' else 'Draw' if win == 'D' else ''
 
                 # All values are valid at this point
-                print('Setting game state')
+                logging.info('Setting game state')
                 score_red = red_score
                 score_blue = blue_score
                 end_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes, seconds=seconds)
@@ -184,8 +188,8 @@ if __name__ == '__main__':
                 winner = win
 
             except ValueError as e:
-                print(e)
-                print('Cancelling setting game state')
+                logging.warning(str(e))
+                logging.warning('Cancelling setting game state')
 
         # Manual control for resetting cars
         if keyboard.is_pressed(reset_car_hot_key):
@@ -194,8 +198,8 @@ if __name__ == '__main__':
             values.append('all')
             reset = input('Reset car {}: '.format(values))
             if reset in values:
-                print('Resetting Cars')
+                logging.warning('Resetting Cars')
                 reset_car_manager(int(reset) - 1 if reset.isnumeric() else None)
             else:
-                print('ValueError: Value mus be in {}'.format(values))
-                print('Cancelling resetting a car')
+                logging.warning('ValueError: Value mus be in {}'.format(values))
+                logging.warning('Cancelling resetting a car')

@@ -7,8 +7,13 @@ import keyboard
 from inputs import devices
 import json
 import boto3
+import logging
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
+
+
+# Set the logging level
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
 
 '''
@@ -215,10 +220,10 @@ def initialize_ports():
     for port in ports:
         try:
             s = serial.Serial(port=port, baudrate=115200, timeout=1)
-            print(port)
+            logging.info(str(port))
             available_ports.append(s)
         except (OSError, serial.SerialException) as e:
-            # print(e)
+            logging.debug(str(e))
             pass
     return available_ports
 
@@ -241,7 +246,7 @@ def connect_to_bluetooth(mac_address):
         raise ValueError('Invalid MAC address')
 
     port = 1
-    print('Attempting to connect on port', port)
+    logging.debug('Attempting to connect on port {}'.format(port))
     sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
     try:
         sock.connect((mac_address, port))
@@ -249,7 +254,7 @@ def connect_to_bluetooth(mac_address):
         # OSError when failing to connect, skip and go to next port unless we've run out of ports in the range
         raise ConnectionError('Failed to connect')
 
-    print('Connected to {}:{}'.format(mac_address, port))
+    logging.info('Connected to {}:{}'.format(mac_address, port))
     return sock
 
 
@@ -354,7 +359,7 @@ def read_database_commands(cl, it, previous_command_flags):
 
     if 'Records' in response.keys() and len(response['Records']) > 0:
         keys_pressed = json.loads(response['Records'][0]['dynamodb']['NewImage']['description']['S'])
-        print(keys_pressed)
+        logging.info(keys_pressed)
         cmd_flags = 0x00
 
         if keys_pressed['KeyS']:

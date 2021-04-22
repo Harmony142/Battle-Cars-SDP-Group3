@@ -1,6 +1,10 @@
 
+import logging
 from hub_common import initialize_sqs_client, initialize_dynamodb_client, read_from_sqs, \
     push_player_name_to_database, connect_to_bluetooth, pattern_map
+
+# Set the logging level
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
 
 def car_manager(car_number, mac_address):
@@ -27,7 +31,7 @@ def car_manager(car_number, mac_address):
         if command_player_name is not None and active_player_name is None:
             # Claim a car and update the database
             active_player_name = command_player_name
-            print(active_player_name, 'connected to Car', car_number)
+            logging.info('{} connected to Car {}'.format(active_player_name, car_number))
             push_player_name_to_database(dynamodb_client, car_number, active_player_name)
     
         # Send the data over bluetooth if the state for the designated car has changed
@@ -46,17 +50,17 @@ def car_manager(car_number, mac_address):
             """
             try:
                 if bluetooth_socket is None:
-                    print('First connection for Car {}, attempting to connect'.format(car_number))
+                    logging.info('First connection for Car {}, attempting to connect'.format(car_number))
                     bluetooth_socket = connect_to_bluetooth(mac_address)
 
-                print('Sending {0:#010b} to Car {1}'.format(command_flags, car_number))
+                logging.info('Sending {0:#010b} to Car {1}'.format(command_flags, car_number))
 
                 # Always send command_flags
                 bluetooth_socket.send(command_flags.to_bytes(1, "little"))
 
                 # Send customization data if present
                 if customization_data is not None:
-                    print('Sending Customization Data ({Pattern}, {Red}, {Green}, {Blue}) to Car'.format(
+                    logging.info('Sending Customization Data ({Pattern}, {Red}, {Green}, {Blue}) to Car'.format(
                         **customization_data), car_number)
                     bluetooth_socket.send(customization_data['Pattern'].to_bytes(1, "little"))
                     bluetooth_socket.send(customization_data['Red'].to_bytes(1, "little"))
@@ -65,10 +69,10 @@ def car_manager(car_number, mac_address):
                     current_customization_data = customization_data
 
             except OSError:
-                print('Disconnected from car {}, attempting to reconnect'.format(car_number))
+                logging.info('Disconnected from car {}, attempting to reconnect'.format(car_number))
                 try:
                     bluetooth_socket = connect_to_bluetooth(mac_address)
                 except ConnectionError as e:
-                    print(e)
+                    logging.info(e)
 
             previous_command_flags = command_flags

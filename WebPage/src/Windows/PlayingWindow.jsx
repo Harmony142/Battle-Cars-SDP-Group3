@@ -208,12 +208,12 @@ const PlayingWindow = (props) => {
     payload['Blue'] = document.getElementById('blue-slider').value;
 
     pushToSQS(payload);
-  }
+  };
 
   const selectPattern = (event) => {
     document.getElementById("dropup-button").innerHTML = event.target.innerHTML;
     sendCustomizationData();
-  }
+  };
 
   async function pushToSQS(payload) {
     if (selectedCar !== null) {
