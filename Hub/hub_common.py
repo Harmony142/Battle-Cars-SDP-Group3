@@ -1,5 +1,4 @@
 
-import datetime
 import sys
 import glob
 import serial
@@ -8,63 +7,49 @@ import keyboard
 from inputs import devices
 import json
 import boto3
-import csv
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 
+'''
+# Variables for connecting to the sqs queue holding user commands
+credentials_csv_file_name = 'sqs-read-delete-creds.csv'
+
+with open(credentials_csv_file_name, newline='') as csvfile:
+    reader = csv.DictReader(csvfile)
+    credentials = next(reader)
+    
+credentials['Access key ID']
+credentials['Secret access key']
+'''
+
+
 def initialize_sqs_client():
-    # Variables for connecting to the sqs queue holding user commands
-    credentials_csv_file_name = 'sqs-read-delete-creds.csv'
-
-    with open(credentials_csv_file_name, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        credentials = next(reader)
-
     # Connect to AWS SQS
     return boto3.client(
         service_name='sqs',
         region_name='us-east-2',
-        aws_access_key_id=credentials['Access key ID'],
-        aws_secret_access_key=credentials['Secret access key'])
+        aws_access_key_id='AKIAY563PRYUW56AU3MJ',
+        aws_secret_access_key='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')
 
 
-def read_from_sqs(sqs_client, targets):
-    queue_url = 'https://sqs.us-east-2.amazonaws.com/614103748137/user-commands.fifo'
+pattern_map = {
+    'Off': 200,
+    'Solid': 0,
+    'Flashing': 1,
+    'Alternating': 2,
+    'Snake': 3,
+    'Pulse': 4,
+    'Wave': 5,
+    'Rainbow': 6,
+    'Party': 7
+}
 
-    response = sqs_client.receive_message(
-        QueueUrl=queue_url,
-        MaxNumberOfMessages=1,
-        WaitTimeSeconds=1
-    )
 
-    if 'Messages' in response.keys():
-        payload = json.loads(response['Messages'][0]['Body'])
-
-        # Ignore commands from players without proper name or car
-        if payload['CarNumber'] is None or payload['PlayerName'] is None:
-            print('a')
-            return None, None
-        """
-        Bit Positions
-        76543210
-        0-1: Car Number
-        2: Unused currently
-        3: Boost Enabled
-        4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
-        6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
-        """
-        car_index = int(payload['CarNumber'].split('-')[1]) - 1
-        player_name = payload['PlayerName']
-
-        # Ignore commands coming from players who do not own this car once it is claimed
-        if targets[car_index][3] is None:
-            targets[car_index][3] = player_name
-        elif targets[car_index][3] != player_name:
-            print('b')
-            return None, None
-
-        cmd_flags = 0x00 | car_index
+def interpret_command_payload(payload):
+    cmd_flags = 0x00
+    command_keys = ['KeyS', 'KeyW', 'KeyA', 'KeyD', 'ShiftLeft']
+    if all(key in payload.keys() for key in command_keys):
         if bool(payload['KeyS']):
             cmd_flags |= 1 << 4
         if bool(payload['KeyW']):
@@ -77,27 +62,67 @@ def read_from_sqs(sqs_client, targets):
         if bool(payload['ShiftLeft']):
             cmd_flags |= 1 << 3
 
-        return cmd_flags, payload['StartTime']
+    return cmd_flags
 
-    return None, None
+
+def read_from_sqs(sqs_client, car_number):
+    queue_url = 'https://sqs.us-east-2.amazonaws.com/614103748137/car-commands-{}.fifo'.format(car_number)
+
+    response = sqs_client.receive_message(
+        QueueUrl=queue_url,
+        MaxNumberOfMessages=1,
+        WaitTimeSeconds=20
+    )
+
+    try:
+        payload = json.loads(response['Messages'][0]['Body'])
+        player_name = payload['PlayerName']
+
+        """
+        Bit Positions
+        76543210
+        0-1: Unused
+        2: Ensuing Customization Data
+        3: Boost Enabled
+        4-5: Forwards/Backwards - 00-Nothing, 01-Backwards, 10-Forwards, 11-Nothing
+        6-7: Left/Right - 00-Nothing, 01-Right, 10-Left, 11-Nothing
+        """
+        cmd_flags = interpret_command_payload(payload)
+
+        customization_data = None
+        customization_keys = ['Pattern', 'Red', 'Green', 'Blue']
+        if all(key in payload.keys() for key in customization_keys):
+            cmd_flags |= 1 << 2
+            customization_data = {
+                'Pattern': pattern_map[payload['Pattern']],
+                **{k: int(payload[k]) for k in customization_keys[1:]}
+            }
+
+        return cmd_flags, player_name, customization_data
+    except KeyError:
+        pass
+    except IndexError:
+        pass
+
+    return None, None, None
 
 
 def initialize_dynamodb_client():
-    credentials_csv_file_name = 'dynamodb-update-only-creds.csv'
-
-    with open(credentials_csv_file_name, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        credentials = next(reader)
+    # credentials_csv_file_name = 'dynamodb-update-only-creds.csv'
+    #
+    # with open(credentials_csv_file_name, newline='') as csvfile:
+    #     reader = csv.DictReader(csvfile)
+    #     credentials = next(reader)
 
     # Connect to AWS DynamoDB
     return boto3.client(
         service_name='dynamodb',
         region_name='us-east-2',
-        aws_access_key_id=credentials['Access key ID'],
-        aws_secret_access_key=credentials['Secret access key'])
+        aws_access_key_id='AKIAY563PRYUZJ2KYM52',
+        aws_secret_access_key='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')
 
 
-def push_to_database(dynamodb_client, score_red, score_blue, time_left, targets):
+def push_game_state_to_database(dynamodb_client, score_red, score_blue, time_left, winner, overtime):
     table_name = 'BattleCarsScore'
 
     attribute_updates = {
@@ -115,11 +140,40 @@ def push_to_database(dynamodb_client, score_red, score_blue, time_left, targets)
             'Value': {
                 'S': str.join(':', str(time_left).split('.')[0].split(':')[1:])
             }
+        },
+        'winner': {
+            'Value': {
+                'S': winner
+            }
+        },
+        'overtime': {
+            'Value': {
+                'BOOL': overtime
+            }
         }
     }
 
-    for i, target in enumerate(targets):
-        attribute_updates['car_{}'.format(i + 1)] = {'Value': {'S': target[3] if target[3] is not None else ''}}
+    dynamodb_client.update_item(
+        TableName=table_name,
+        Key={
+            'id': {
+                'N': '1'
+            }
+        },
+        AttributeUpdates=attribute_updates
+    )
+
+
+def push_player_name_to_database(dynamodb_client, car_number, player_name):
+    table_name = 'BattleCarsScore'
+
+    attribute_updates = {
+        'car_{}'.format(car_number): {
+            'Value': {
+                'S': player_name if player_name is not None else ''
+            }
+        }
+    }
 
     dynamodb_client.update_item(
         TableName=table_name,
@@ -138,17 +192,17 @@ def initialize_ports():
     adapted from https://stackoverflow.com/questions/12090503/listing-available-com-ports-with-py
 
     To find bluetooth COM ports, open settings then go to bluetooth and select "More Bluetooth Options".
-    Inside "More Bluetooth Options", click on "COM Ports" and put the lower number in each pair (outgoing)
+    Inside "More Bluetooth Options", click on "COM Ports" and put all COM ports in "bluetooth_com_ports"
 
     :raises EnvironmentError:
         On unsupported or unknown platforms
     :returns:
         A list of the serial ports available on the system
     """
-    bluetooth_com_ports = [3, 7]
+    bluetooth_com_ports = [4, 7, 16, 17, 21, 22, 23, 24]
     if sys.platform.startswith('win'):
-        ports = set(['COM%s' % (i + 1) for i in range(11)]) - \
-                set(['COM{}'.format(i + j) for i in range(0, 2) for j in bluetooth_com_ports])
+        ports = set(['COM%s' % (i + 1) for i in range(30)]) - \
+                set(['COM{}'.format(i) for i in bluetooth_com_ports])
     elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
         # this excludes your current terminal "/dev/tty"
         ports = glob.glob('/dev/tty[A-Za-z]*')
@@ -169,64 +223,34 @@ def initialize_ports():
     return available_ports
 
 
-def connect_to_bluetooth(target):
+def connect_to_bluetooth(mac_address):
     """
     Connects to a target bluetooth device via MAC address if available or by searching for device name
 
-    :param target:  list with structure [device name, MAC address, socket]
+    :param mac_address:  MAC address of the target device. Can be found using get_mac_addresses.py
     :raises ValueError: if target structure is invalid or useless, requires user intervention
     :raises ConnectionError: if we fail to connect to the target, should not require user intervention
     """
-
-    # Check that input is useful
-    if target[0] is None and target[1] is None:
-        raise ValueError('No connection information')
-
-    # Check input class of device name
-    if target[0] is not None and target[0].__class__ is not str:
-        raise ValueError('Target must be string or None')
-
     # Check input class of MAC address
-    if target[1] is not None and target[1].__class__ is not str:
-        raise ValueError('MAC address must be string or None')
+    if mac_address.__class__ is not str:
+        raise ValueError('MAC address must be string')
 
     # Check if the target fits the format of a MAC address
-    if target[1] is not None:
-        check = target[1].split(':')
-        if len(check) != 6 or not all(len(key) == 2 for key in check):
-            raise ValueError('Invalid MAC address')
-
-    # Search for bluetooth device if MAC address is not provided
-    if target[1] is None:
-        # Scan for nearby devices
-        print('Scanning for nearby devices...')
-        nearby_devices = bluetooth.discover_devices()
-
-        # Try and find our bluetooth module
-        print('Searching for our bluetooth module...')
-        for bluetooth_device_address in nearby_devices:
-            print(bluetooth.lookup_name(bluetooth_device_address))
-            if bluetooth.lookup_name(bluetooth_device_address) == target[0]:
-                target[1] = bluetooth_device_address
-                break
-
-        # Check we found our target
-        if target[1] is None:
-            raise ConnectionError('Failed to find target bluetooth device nearby')
-
-        print('Found target bluetooth device', target[0], 'with address', target[1])
+    check = mac_address.split(':')
+    if len(check) != 6 or not all(len(key) == 2 for key in check):
+        raise ValueError('Invalid MAC address')
 
     port = 1
     print('Attempting to connect on port', port)
     sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
     try:
-        sock.connect((target[1], port))
+        sock.connect((mac_address, port))
     except OSError as e:
         # OSError when failing to connect, skip and go to next port unless we've run out of ports in the range
         raise ConnectionError('Failed to connect')
 
-    print('Connected to {} at {}:{}'.format(target[0], target[1], port))
-    target[2] = sock
+    print('Connected to {}:{}'.format(mac_address, port))
+    return sock
 
 
 def read_keyboard_commands():
