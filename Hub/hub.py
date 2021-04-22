@@ -7,7 +7,7 @@ from hub_common import initialize_dynamodb_client, push_game_state_to_database, 
 from car_manager import car_manager
 
 # Set the logging level
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+logging.basicConfig(format='[%(asctime)s][%(filename)s][%(levelname)s]: %(message)s', level=logging.INFO)
 
 """
 ----- TO INSTALL PYBLUEZ ON WINDOWS -----

@@ -4,7 +4,7 @@ from hub_common import initialize_sqs_client, initialize_dynamodb_client, read_f
     push_player_name_to_database, connect_to_bluetooth, pattern_map
 
 # Set the logging level
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+logging.basicConfig(format='[%(asctime)s][%(filename)s][%(levelname)s]: %(message)s', level=logging.ERROR)
 
 
 def car_manager(car_number, mac_address):

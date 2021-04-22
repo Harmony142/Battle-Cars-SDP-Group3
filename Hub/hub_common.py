@@ -13,7 +13,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 
 # Set the logging level
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+logging.basicConfig(format='[%(asctime)s][%(filename)s][%(levelname)s]: %(message)s', level=logging.INFO)
 
 
 '''

@@ -23,7 +23,7 @@ from hub_common import initialize_ports, connect_to_bluetooth, interpret_command
 from car_manager import car_manager
 
 # Set the logging level
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+logging.basicConfig(format='[%(asctime)s][%(filename)s][%(levelname)s]: %(message)s', level=logging.INFO)
 
 # Number of commands to send to each car
 n = 10  # 100?
