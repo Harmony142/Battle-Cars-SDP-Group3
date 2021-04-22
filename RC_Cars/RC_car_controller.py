@@ -5,6 +5,13 @@ import busio
 import digitalio
 from digitalio import DigitalInOut, Direction
 from analogio import AnalogIn
+<<<<<<< Updated upstream
+=======
+import neopixel
+
+car_index = 0
+
+>>>>>>> Stashed changes
 
 class MotorDriver:
     def __init__(self):
@@ -68,8 +75,6 @@ uart = busio.UART(board.TX, board.RX, baudrate=9600)
 
 led = digitalio.DigitalInOut(board.D13)
 led.direction = digitalio.Direction.OUTPUT
-
-car_index = 0
 
 
 while True:
