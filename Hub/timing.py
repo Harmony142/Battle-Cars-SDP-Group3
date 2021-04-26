@@ -36,8 +36,8 @@ message_delays = numpy.linspace(start=starting_delay, stop=ending_delay, num=num
 # MAC addresses of the connected cars
 mac_addresses = [
     '20:20:03:19:06:58',
-    '20:20:03:19:31:96',
     '98:D3:32:11:0B:77',
+    '20:20:03:19:31:96',
     '20:20:03:19:10:31'
 ]
 
