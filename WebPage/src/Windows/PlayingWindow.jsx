@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import "./Windows.css";
-import CustomizationMenu from './Customization.jsx'
+import { Link } from "react-router-dom";
 import { playerName, selectedCar } from '../Home/Home.jsx'
 import { scoreRed, scoreBlue, timer, car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName, winner, overtime }
     from '../App.js';
@@ -289,8 +289,8 @@ const PlayingWindow = (props) => {
               <pattern onMouseDown={selectPattern}>Party</pattern>
             </div>
           </div>
-          <h1 className="time-left" id="time-left">20:00</h1>
-          <h1 className="overtime-flag" id="overtime-flag">Overtime!</h1>
+          <h1 className="time-left" id="time-left" style={{left: '220px'}}>20:00</h1>
+          <h1 className="overtime-flag" id="overtime-flag" style={{left: '224px'}}>Overtime!</h1>
           <h1 className="score-red" id="score-red">0</h1>
         </div>
         <div className="right-bar">
@@ -303,6 +303,7 @@ const PlayingWindow = (props) => {
               <h1 className="key" id="KeyD" style={{bottom: '0px', right: '0px'}}>D</h1>
             </div>
             <h1 className="shift-key" id="ShiftLeft">LShift</h1>
+            <Link to={'/'} className="home-button" id="home-button" style={{top:'0px', left:'0px'}}>Back to Login</Link>
           </div>
         </div>
       </div>

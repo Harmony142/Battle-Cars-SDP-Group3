@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import "./Windows.css";
-import CustomizationMenu from './Customization.jsx'
+import { Link } from "react-router-dom";
 import { playerName, selectedCar } from '../Home/Home.jsx'
 import { scoreRed, scoreBlue, timer, car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName, winner, overtime }
     from '../App.js';
@@ -175,12 +175,15 @@ const WatchingWindow = (props) => {
       </div>
       <div className="bottom-bar">
         <div className="left-bar">
-          <h1 className="time-left" id="time-left">20:00</h1>
-          <h1 className="overtime-flag" id="overtime-flag">Overtime!</h1>
+          <h1 className="time-left" id="time-left" style={{left: '10px'}}>20:00</h1>
+          <h1 className="overtime-flag" id="overtime-flag" style={{left: '14px'}}>Overtime!</h1>
           <h1 className="score-red" id="score-red">0</h1>
         </div>
         <div className="right-bar">
           <h1 className="score-blue" id="score-blue">0</h1>
+          <div className="controls-wrapper">
+            <Link to={'/'} className="home-button" id="home-button" style={{bottom:'0px', right:'0px'}}>Back to Login</Link>
+          </div>
         </div>
       </div>
     </div>
