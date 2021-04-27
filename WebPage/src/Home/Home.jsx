@@ -32,11 +32,6 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleCarEnter = (event) => {
-    // Highlight button
-    event.target.style.borderStyle = 'inset';
-  };
-
   const updatePlayButton = () => {
     const playButtonStyle = document.getElementById('play-button').style;
     const disabledPlayButtonStyle = document.getElementById('disabled-play-button').style;
@@ -51,25 +46,32 @@ const Home = () => {
     }
   };
 
+  const handleCarEnter = (event) => {
+    // Highlight button
+    document.getElementById('car-' + event.target.id.split('-')[1]).style.borderStyle = 'inset';
+  };
+
   const handleCarLeave = (event) => {
     // Remove button highlight
-    if(event.target.id !== selectedCar) {
-      event.target.style.borderStyle = 'outset';
+    const button = document.getElementById('car-' + event.target.id.split('-')[1]);
+    if(button.id !== selectedCar) {
+      button.style.borderStyle = 'outset';
     }
   };
 
   const handleCarSelection = (event) => {
     // Set this button pressed down
-    console.log('Selected Car ' + event.target.id);
-    selectedCar = event.target.id;
-    const selectedCarStyle = event.target.style;
+    const button = document.getElementById('car-' + event.target.id.split('-')[1]);
+    console.log('Selected Car ' + button.id);
+    selectedCar = button.id;
+    const selectedCarStyle = button.style;
     selectedCarStyle.borderStyle = 'inset';
     selectedCarStyle.backgroundColor = 'darkgrey';
 
     // Set all other buttons not pressed
     for(var i = 1; i <= 4; i++) {
       const car_id = 'car-' + i;
-      if(car_id !== event.target.id) {
+      if(car_id !== button.id) {
         const carSelectStyle = document.getElementById(car_id).style;
         carSelectStyle.borderStyle = 'outset';
         carSelectStyle.backgroundColor = 'lightgrey';
@@ -95,25 +97,29 @@ const Home = () => {
           <div className="car-wrapper" style={{top: '0px', left: '0px'}}>
             <h1 className="car-selection" id="car-1"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}>Car 1</h1>
-            <h2 className="car-player-name" id="car-1-player-name"/>
+            <h2 className="car-player-name" id="car-1-player-name"
+              onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}/>
           </div>
 
           <div className="car-wrapper" style={{bottom: '0px', left: '0px'}}>
             <h1 className="car-selection" id="car-2"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}>Car 2</h1>
-            <h2 className="car-player-name" id="car-2-player-name"/>
+            <h2 className="car-player-name" id="car-2-player-name"
+              onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}/>
           </div>
 
           <div className="car-wrapper" style={{top: '0px', right: '0px'}}>
             <h1 className="car-selection" id="car-3"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}>Car 3</h1>
-            <h2 className="car-player-name" id="car-3-player-name"/>
+            <h2 className="car-player-name" id="car-3-player-name"
+              onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}/>
           </div>
 
           <div className="car-wrapper" style={{bottom: '0px', right: '0px'}}>
             <h1 className="car-selection" id="car-4"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}>Car 4</h1>
-            <h2 className="car-player-name" id="car-4-player-name"/>
+            <h2 className="car-player-name" id="car-4-player-name"
+              onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}/>
           </div>
         </div>
         <input

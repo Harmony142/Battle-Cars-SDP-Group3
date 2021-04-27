@@ -1,19 +1,92 @@
 import React, { useEffect } from "react";
 import "./Windows.css";
-import CustomizationMenu from './Customization.jsx'
+import { Link } from "react-router-dom";
 import { playerName, selectedCar } from '../Home/Home.jsx'
 import { scoreRed, scoreBlue, timer, car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName, winner, overtime }
     from '../App.js';
+
+const promise = require('promise');
+const confetti = require('canvas-confetti');
+confetti.Promise = promise;
+
+var myConfetti = confetti.create(document.getElementById('page-wrapper'), {
+    resize: true,
+    useWorker: true
+});
+
+var goalConfettiLength = 2 * 1000;
+var redEnd = Date.now();
+var blueEnd = Date.now();
+var redColors = ['#DC143C', '#B22222', '#F08080'];
+var blueColors = ['#191970', '#1E90FF', '#00BFFF'];
+var confettiDefaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 2 };
+
+function randomInRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
 
 document.body.style.overflow = "hidden";
 
 const WatchingWindow = (props) => {
   useEffect(() => {
+    const interval = setInterval(function() {
+      if (Date.now() < redEnd) {
+        myConfetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: redColors,
+          zIndex: 2
+        });
+     }}, 50);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(function() {
+      if (Date.now() < blueEnd) {
+        myConfetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: blueColors,
+          zIndex: 2
+        });
+     }}, 50);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(function() {
+      if (winner === 'Red Team' || winner === 'Blue Team') {
+        var particleCount = 50;
+        // since particles fall down, start a bit higher than random
+        myConfetti(Object.assign({}, confettiDefaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        myConfetti(Object.assign({}, confettiDefaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+      }}, 250);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       // Update the score
       try {
-        document.getElementById('score-red').innerHTML = scoreRed;
-        document.getElementById('score-blue').innerHTML = scoreBlue;
+        const redScore = document.getElementById('score-red');
+        if (scoreRed > parseInt(redScore.innerHTML)) {
+          redEnd = Date.now() + goalConfettiLength;
+        }
+        redScore.innerHTML = scoreRed;
+
+        const blueScore = document.getElementById('score-blue');
+        if (scoreBlue > blueScore.innerHTML) {
+          blueEnd = Date.now() + goalConfettiLength;
+        }
+        blueScore.innerHTML = scoreBlue;
       } catch(err) {
         console.log("could not update score");
       }
@@ -82,7 +155,7 @@ const WatchingWindow = (props) => {
   }, []);
 
   return (
-    <div>
+    <div id='page-wrapper'>
       <div className="red-half"/>
       <div className="blue-half"/>
       <div className="main-window">
@@ -102,12 +175,15 @@ const WatchingWindow = (props) => {
       </div>
       <div className="bottom-bar">
         <div className="left-bar">
-          <h1 className="time-left" id="time-left">20:00</h1>
-          <h1 className="overtime-flag" id="overtime-flag">Overtime!</h1>
+          <h1 className="time-left" id="time-left" style={{left: '10px'}}>20:00</h1>
+          <h1 className="overtime-flag" id="overtime-flag" style={{left: '14px'}}>Overtime!</h1>
           <h1 className="score-red" id="score-red">0</h1>
         </div>
         <div className="right-bar">
           <h1 className="score-blue" id="score-blue">0</h1>
+          <div className="controls-wrapper">
+            <Link to={'/'} className="home-button" id="home-button" style={{bottom:'0px', right:'0px'}}>Back to Login</Link>
+          </div>
         </div>
       </div>
     </div>

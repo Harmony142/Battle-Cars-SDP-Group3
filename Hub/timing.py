@@ -18,11 +18,15 @@ import time
 import boto3
 import os
 import sys
+import logging
 from hub_common import initialize_ports, connect_to_bluetooth, interpret_command_payload
 from car_manager import car_manager
 
+# Set the logging level
+logging.basicConfig(format='[%(asctime)s][%(filename)s][%(levelname)s]: %(message)s', level=logging.INFO)
+
 # Number of commands to send to each car
-n = 20  # 100?
+n = 10  # 100?
 
 # Z score for 95% confidence interval
 z_score = 1.96
@@ -30,7 +34,7 @@ z_score = 1.96
 # Variables for intervals
 starting_delay = 1000
 ending_delay = 100
-number_of_delays = 10  # 20
+number_of_delays = 1  # 20
 message_delays = numpy.linspace(start=starting_delay, stop=ending_delay, num=number_of_delays)
 
 # MAC addresses of the connected cars
@@ -100,7 +104,7 @@ def mock_bluetooth_messenger(delay_, car_index_, mac_address_):
 # Subprocess for sending periodic messages to an individual car
 def bluetooth_messenger(delay_, car_index_, mac_address_):
     # Time interval between commands
-    message_rate = datetime.timedelta(milliseconds=int(delay_))
+    # message_rate = datetime.timedelta(milliseconds=int(delay_))
 
     # Table for measuring response times from the cars
     start_times_ = pandas.DataFrame(index=numpy.arange(n), columns=[car_names[car_index_]], dtype='datetime64')
@@ -118,7 +122,7 @@ def bluetooth_messenger(delay_, car_index_, mac_address_):
     next_message_time = datetime.datetime.now()
 
     # Previously sent command for each car
-    command_payload = {
+    command_payload_ = {
         'KeyW': False,
         'KeyA': False,
         'KeyS': False,
@@ -129,23 +133,83 @@ def bluetooth_messenger(delay_, car_index_, mac_address_):
     # Send messages to our car at regular intervals
     while messages_sent < n:
         # Send messages to each car's SQS queue if the time interval has passed
-        if datetime.datetime.now() > next_message_time:
-            # Send messages
-            print('Sending message', messages_sent)
+        time.sleep(delay_ / 1000)
+        # if datetime.datetime.now() > next_message_time:
+        # Send messages
+        logging.info('Sending message', messages_sent)
 
-            # Record the start time
-            start_times_.at[messages_sent, car_names[car_index_]] = datetime.datetime.now()
+        # Record the start time
+        start_times_.at[messages_sent, car_names[car_index_]] = datetime.datetime.now()
 
-            # Flip the command so the hub doesn't de-dupe it
-            command_payload['KeyW'] = not command_payload['KeyW']
-            bluetooth_socket.send(interpret_command_payload(command_payload).to_bytes(1, "little"))
+        # Flip the command so the hub doesn't de-dupe it
+        command_payload_['KeyW'] = not command_payload_['KeyW']
+        bluetooth_socket.send(interpret_command_payload(command_payload_).to_bytes(1, "little"))
 
-            # Wait until it's time to send another message
-            next_message_time = datetime.datetime.now() + message_rate
-            messages_sent += 1
+        # Wait until it's time to send another message
+        # next_message_time = datetime.datetime.now() + message_rate
+        messages_sent += 1
 
     # Record our results
+    time.sleep(3)
     start_times_.to_csv(start_times_file_path.format(car_index_), index=False)
+    sys.exit(0)
+
+
+# Subprocess for sending messages to the cars via bluetooth
+def solo_bluetooth_messenger(delay_, *mac_addresses_):
+    # Time interval between commands
+    # message_rate = datetime.timedelta(milliseconds=int(delay_))
+
+    # Table for measuring response times from the cars
+    start_times_ = pandas.DataFrame(index=numpy.arange(n), columns=car_names, dtype='datetime64')
+
+    # Connect to the cars
+    bluetooth_sockets_ = []
+    for mac_address_ in mac_addresses_:
+        bluetooth_socket = None
+        while bluetooth_socket is None:
+            try:
+                bluetooth_socket = connect_to_bluetooth(mac_address_)
+            except ConnectionError:
+                pass
+        bluetooth_sockets_.append(bluetooth_socket)
+
+    # Keep looping until all responses have been received
+    messages_sent = 0
+    # next_message_time = datetime.datetime.now()
+
+    # Previously sent command for each car
+    command_payload_ = {
+        'KeyW': False,
+        'KeyA': False,
+        'KeyS': False,
+        'KeyD': False,
+        'ShiftLeft': False
+    }
+
+    # Send messages to each car at regular intervals
+    while messages_sent < n:
+        # Send messages to each car's SQS queue if the time interval has passed
+        # if datetime.datetime.now() > next_message_time:
+        # Send messages
+        logging.info('Sending message', messages_sent)
+        time.sleep(delay_ / 1000)
+        # Flip the command so the hub doesn't de-dupe it
+        command_payload_['KeyW'] = not command_payload_['KeyW']
+        for index_, socket_ in enumerate(bluetooth_sockets_):
+            # Record the start time
+            start_times_.at[messages_sent, car_names[index_]] = datetime.datetime.now()
+
+            # Send to car TODO test if we should only call this once
+            socket_.send(interpret_command_payload(command_payload_).to_bytes(1, "little"))
+
+        # Wait until it's time to send another message
+        # next_message_time = datetime.datetime.now() + message_rate
+        messages_sent += 1
+
+    # Record our results
+    time.sleep(3)
+    start_times_.to_csv(start_times_file_path.format('E2E'), index=False)
     sys.exit(0)
 
 
@@ -173,20 +237,20 @@ def mock_sqs_messenger(delay_):
     sys.exit(0)
 
 
-# Subprocess for reading responses from cars
+# Subprocess for sending messages to the cars via SQS
 def sqs_messenger(delay_):
     # Time interval between commands
-    message_rate = datetime.timedelta(milliseconds=int(delay_))
+    # message_rate = datetime.timedelta(milliseconds=int(delay_))
 
     # Table for measuring response times from the cars
     start_times_ = pandas.DataFrame(index=numpy.arange(n), columns=car_names, dtype='datetime64')
 
     # Keep looping until all responses have been received
     messages_sent = 0
-    next_message_time = datetime.datetime.now()
+    # next_message_time = datetime.datetime.now()
 
     # Previously sent command for each car
-    command_payloads = [{
+    command_payloads_ = [{
         'PlayerName': car_names[index],
         'KeyW': False,
         'KeyA': False,
@@ -198,22 +262,26 @@ def sqs_messenger(delay_):
     # Send messages to each car at regular intervals
     while messages_sent < n:
         # Send messages to each car's SQS queue if the time interval has passed
-        if datetime.datetime.now() > next_message_time:
-            # Send messages
-            print('Sending message', messages_sent)
-            for index in car_indices:
-                # Record the start time
-                start_times_.at[messages_sent, car_names[index]] = datetime.datetime.now()
+        # if datetime.datetime.now() > next_message_time:
+        # Send messages
+        logging.info('Sending message', messages_sent)
 
-                # Flip the command so the hub doesn't de-dupe it
-                command_payloads[index]['KeyW'] = not command_payloads[index]['KeyW']
-                send_to_sqs(car_numbers[index], command_payloads[index])
+        # Give the other processes time to wake up and respond
+        time.sleep(delay_ / 1000)
+        for index in car_indices:
+            # Record the start time
+            start_times_.at[messages_sent, car_names[index]] = datetime.datetime.now()
 
-            # Wait until it's time to send another message
-            next_message_time = datetime.datetime.now() + message_rate
-            messages_sent += 1
+            # Flip the command so the hub doesn't de-dupe it
+            command_payloads_[index]['KeyW'] = not command_payloads_[index]['KeyW']
+            send_to_sqs(car_numbers[index], command_payloads_[index])
+
+        # Wait until it's time to send another message
+        # next_message_time = datetime.datetime.now() + message_rate
+        messages_sent += 1
 
     # Record our results
+    time.sleep(3)
     start_times_.to_csv(start_times_file_path.format('E2E'), index=False)
     sys.exit(0)
 
@@ -240,7 +308,7 @@ if __name__ == '__main__':
             messengers = []
             if x == 0:
                 # Setup Car Infrastructure
-                print('Setting up car managers')
+                logging.info('Setting up car managers')
                 car_managers = []
                 for car_index, mac_address in enumerate(mac_addresses):
                     # Create subprocess for relaying commands to the cars from SQS
@@ -264,7 +332,7 @@ if __name__ == '__main__':
                 time.sleep(5)
 
                 # Create the subprocess for sending messages to the cars
-                messengers = [multiprocessing.Process(target=sqs_messenger,
+                messengers = [multiprocessing.Process(target=mock_sqs_messenger,
                                                       kwargs={'delay_': message_delay},
                                                       daemon=True)]
                 messengers[0].start()
@@ -273,7 +341,7 @@ if __name__ == '__main__':
                 messengers = []
                 for car_index, mac_address in enumerate(mac_addresses):
                     # Create the subprocess for sending messages to the cars
-                    messengers.append(multiprocessing.Process(target=bluetooth_messenger,
+                    messengers.append(multiprocessing.Process(target=mock_bluetooth_messenger,
                                                               kwargs={'delay_': message_delay,
                                                                       'car_index_': car_index,
                                                                       'mac_address_': mac_address},
@@ -284,7 +352,6 @@ if __name__ == '__main__':
             response_times = pandas.DataFrame(index=numpy.arange(n), columns=car_names, dtype='datetime64')
             response_indices = numpy.zeros(shape=len(mac_addresses), dtype='int')
 
-            """
             # For mock tests only
             offset = datetime.timedelta(seconds=8)
             delta = datetime.timedelta(milliseconds=message_delay)
@@ -292,8 +359,8 @@ if __name__ == '__main__':
                 for j in numpy.arange(n):
                     response_times.at[j, car_names[car_index]] = \
                         datetime.datetime.now() + offset + delta * j
-            """
 
+            """
             while response_times.tail(1).isna().any(None):
                 # See if a car is reporting back to us
                 for port in ports:
@@ -301,7 +368,7 @@ if __name__ == '__main__':
                         # Check if a car is responding to a message
                         line = port.readline().decode('utf-8').strip()
                         if line.startswith('Message Received by Car '):
-                            print(line)
+                            logging.info(line)
                             # Strip the car index from the message
                             car_index = int(line.split()[-1])
 
@@ -311,7 +378,7 @@ if __name__ == '__main__':
 
                             # Update how many responses we've received from this car
                             response_indices[car_index] += 1
-
+            """
             # Save and reload the data because I couldn't figure out how to force the types to lineup otherwise
             response_times.to_csv(response_times_file_path, index=False)
             response_times = pandas.read_csv(response_times_file_path, parse_dates=car_names)
@@ -336,7 +403,7 @@ if __name__ == '__main__':
             sample_means[x][i] = delays.mean(axis=None)
             # standard_error_of_the_mean = numpy.sqrt((((delays - sample_mean) ** 2).sum() / (N - 1)) / N)
             standard_errors[x][i] = stats.sem(a=delays, axis=None)
-            print('{} Message Delay: {}\nSample Mean: {}\nStandard Error: {}'
+            logging.info('{} Message Delay: {}\nSample Mean: {}\nStandard Error: {}'
                   .format('E2E' if x == 0 else 'BT', message_delay, sample_means[x][i], standard_errors[x][i]))
 
             # Cleanup sockets
@@ -346,4 +413,4 @@ if __name__ == '__main__':
     # Write our results
     numpy.savetxt(fname=sample_means_file_path, X=sample_means, delimiter=',')
     numpy.savetxt(fname=standard_errors_file_path, X=standard_errors, delimiter=',')
-    print('Total Script Running Time:', datetime.datetime.now() - timing_script_start_time)
+    logging.info('Total Script Running Time: {}'.format(datetime.datetime.now() - timing_script_start_time))

@@ -123,14 +123,12 @@
 .time-left {
     position: absolute;
     margin: 0px;
-    left: 220px;
     bottom: 6px;
 }
 
 .overtime-flag {
     position: absolute;
     margin: 0px;
-    left: 224px;
     bottom: 38px;
 
     visibility: hidden;
@@ -187,6 +185,32 @@
     border-color: grey;
     border-width: 5px;
     border-radius: 5px;
+}
+
+.home-button {
+  position: absolute;
+  width: 110px;
+  height: 40px;
+  margin: 0px;
+
+  background-color: firebrick;
+
+  color: white;
+  text-align: center;
+  font-size: 16px;
+  line-height: 38px;
+  text-decoration: none;
+
+  border-style: solid;
+  border-color: black;
+  border-width: 2px;
+  border-radius: 5px;
+
+  z-index: 1;
+}
+
+.home-button:hover {
+    background-color: #d62929;
 }
 
 .slider-wrapper {
