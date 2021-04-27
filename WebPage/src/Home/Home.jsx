@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { pushToSQS } from '../Windows/PlayingWindow.jsx'
 import { car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName } from '../App.js';
 
 import "./Home.css";
@@ -86,6 +87,18 @@ const Home = () => {
     updatePlayButton();
   };
 
+  const sendInitialMessage = (event) => {
+    // Connect the player and set the colors to the default Party to show someone has connected
+    const payload = JSON.parse(JSON.stringify({'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false}));
+    payload['PlayerName'] = playerName === '' ? null : playerName;
+    payload['Pattern'] = 'Party';
+    payload['Red'] = 50;
+    payload['Green'] = 50;
+    payload['Blue'] = 50;
+
+    pushToSQS(payload);
+  };
+
   return (
     <div className="home-window">
       <div className="red-half"/>
@@ -129,7 +142,7 @@ const Home = () => {
           className="text-input-field"
         />
         <Link to={'/Watching'} className="watch-button" id="watch-button">Watch</Link>
-        <Link to={'/Playing'} className="play-button" id="play-button">Play</Link>
+        <Link to={'/Playing'} className="play-button" id="play-button" onMouseDown={sendInitialMessage}>Play</Link>
         <h1 className="disabled-play-button" id="disabled-play-button">Select a Car and Enter Your Name to Play</h1>
       </div>
     </div>

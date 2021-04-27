@@ -162,15 +162,15 @@ const WatchingWindow = (props) => {
         <h1 className="victory-card" id="victory-card">Red Team Wins!</h1>
         <div className="screen-wrapper">
           <iframe src="https://viewer.millicast.com/v2?streamId=hrFywT/kgplc3ye"
-          allowFullScreen className="room-video"/>
+            allowFullScreen className="room-video"/>
           <h1 className="car-window-name" id="car-1-player-name"
-          style={{top: '150px', left: '20px', transform: 'rotate(-90deg)'}}/>
+            style={{top: '150px', left: '20px', transform: 'rotate(-90deg)'}}/>
           <h1 className="car-window-name" id="car-2-player-name"
-          style={{bottom: '50px', left: '20px', transform: 'rotate(-90deg)'}}/>
+            style={{bottom: '50px', left: '20px', transform: 'rotate(-90deg)'}}/>
           <h1 className="car-window-name" id="car-3-player-name"
-          style={{top: '0px', right: '18px', transform: 'rotate(90deg)'}}/>
+            style={{top: '0px', right: '18px', transform: 'rotate(90deg)'}}/>
           <h1 className="car-window-name" id="car-4-player-name"
-          style={{bottom: '200px', right: '18px', transform: 'rotate(90deg)'}}/>
+            style={{bottom: '200px', right: '18px', transform: 'rotate(90deg)'}}/>
         </div>
       </div>
       <div className="bottom-bar">

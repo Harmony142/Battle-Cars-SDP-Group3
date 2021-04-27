@@ -50,6 +50,42 @@ function uuidv4() {
   });
 }
 
+async function pushToSQS(payload) {
+  if (selectedCar !== null) {
+    const targetCar = selectedCar.split('-')[1];
+    const currentPlayer = window['car' + targetCar + 'PlayerName'];
+    if (currentPlayer === '' || playerName === currentPlayer) {
+      // Use a uuid so no messages are deduped since we can't disable deduplication on FIFO SQS queues
+      const uuid = uuidv4()
+      const params = {
+        MessageDeduplicationId: uuid,  // Required for FIFO queues
+        MessageGroupId: uuid,  // Required for FIFO queues
+        MessageBody: JSON.stringify(payload),
+        QueueUrl: 'https://sqs.us-east-2.amazonaws.com/614103748137/car-commands-' + targetCar + '.fifo'
+      }
+
+      sqs.sendMessage(params, function(err, data) {
+        if (err) {
+          console.log("SQS Send Error", err);
+        } else {
+          console.log("SQS Send Success", data.MessageId);
+        }
+      });
+    }
+  }
+}
+
+const sendCustomizationData = (event) => {
+  const payload = JSON.parse(JSON.stringify(currKeysPressed));
+  payload['PlayerName'] = playerName === '' ? null : playerName;
+  payload['Pattern'] = document.getElementById('dropup-button').innerHTML;
+  payload['Red'] = document.getElementById('red-slider').value;
+  payload['Green'] = document.getElementById('green-slider').value;
+  payload['Blue'] = document.getElementById('blue-slider').value;
+
+  pushToSQS(payload);
+};
+
 const PlayingWindow = (props) => {
   useEffect(() => {
     const interval = setInterval(function() {
@@ -199,46 +235,10 @@ const PlayingWindow = (props) => {
     }
   }
 
-  const sendCustomizationData = (event) => {
-    const payload = JSON.parse(JSON.stringify(currKeysPressed));
-    payload['PlayerName'] = playerName === '' ? null : playerName;
-    payload['Pattern'] = document.getElementById('dropup-button').innerHTML;
-    payload['Red'] = document.getElementById('red-slider').value;
-    payload['Green'] = document.getElementById('green-slider').value;
-    payload['Blue'] = document.getElementById('blue-slider').value;
-
-    pushToSQS(payload);
-  };
-
   const selectPattern = (event) => {
     document.getElementById("dropup-button").innerHTML = event.target.innerHTML;
     sendCustomizationData();
   };
-
-  async function pushToSQS(payload) {
-    if (selectedCar !== null) {
-      const targetCar = selectedCar.split('-')[1];
-      const currentPlayer = window['car' + targetCar + 'PlayerName'];
-      if (currentPlayer === '' || playerName === currentPlayer) {
-        // Use a uuid so no messages are deduped since we can't disable deduplication on FIFO SQS queues
-        var uuid = uuidv4()
-        var params = {
-          MessageDeduplicationId: uuid,  // Required for FIFO queues
-          MessageGroupId: uuid,  // Required for FIFO queues
-          MessageBody: JSON.stringify(payload),
-          QueueUrl: 'https://sqs.us-east-2.amazonaws.com/614103748137/car-commands-' + targetCar + '.fifo'
-        }
-
-        sqs.sendMessage(params, function(err, data) {
-          if (err) {
-            console.log("SQS Send Error", err);
-          } else {
-            console.log("SQS Send Success", data.MessageId);
-          }
-        });
-      }
-    }
-  }
 
   return (
     <div id='page-wrapper' onKeyUp={handleKeyPress} onKeyDown={handleKeyPress}>
@@ -248,36 +248,36 @@ const PlayingWindow = (props) => {
         <h1 className="victory-card" id="victory-card">Red Team Wins!</h1>
         <div className="screen-wrapper">
           <iframe src="https://viewer.millicast.com/v2?streamId=hrFywT/kgplc3ye"
-          allowFullScreen className="room-video"/>
+            allowFullScreen className="room-video"/>
           <h1 className="car-window-name" id="car-1-player-name"
-          style={{top: '150px', left: '20px', transform: 'rotate(-90deg)'}}/>
+            style={{top: '150px', left: '20px', transform: 'rotate(-90deg)'}}/>
           <h1 className="car-window-name" id="car-2-player-name"
-          style={{bottom: '50px', left: '20px', transform: 'rotate(-90deg)'}}/>
+            style={{bottom: '50px', left: '20px', transform: 'rotate(-90deg)'}}/>
           <h1 className="car-window-name" id="car-3-player-name"
-          style={{top: '0px', right: '18px', transform: 'rotate(90deg)'}}/>
+            style={{top: '0px', right: '18px', transform: 'rotate(90deg)'}}/>
           <h1 className="car-window-name" id="car-4-player-name"
-          style={{bottom: '200px', right: '18px', transform: 'rotate(90deg)'}}/>
+            style={{bottom: '200px', right: '18px', transform: 'rotate(90deg)'}}/>
         </div>
       </div>
       <div className="bottom-bar">
         <div className="left-bar">
           <div className="slider-wrapper">
-            <div class="slider-container">
-              <input type="range" min="0" max="255" class="red-slider" id="red-slider"
+            <div className="slider-container">
+              <input type="range" min="0" max="255" className="red-slider" id="red-slider"
               onMouseUp={sendCustomizationData}/>
             </div>
-            <div class="slider-container">
-              <input type="range" min="0" max="255" class="green-slider" id="green-slider"
+            <div className="slider-container">
+              <input type="range" min="0" max="255" className="green-slider" id="green-slider"
               onMouseUp={sendCustomizationData}/>
             </div>
-            <div class="slider-container">
-              <input type="range" min="0" max="255" class="blue-slider" id="blue-slider"
+            <div className="slider-container">
+              <input type="range" min="0" max="255" className="blue-slider" id="blue-slider"
               onMouseUp={sendCustomizationData}/>
             </div>
           </div>
-          <div class="dropup">
-            <button class="dropup-button" id="dropup-button">Off</button>
-            <div class="dropup-content">
+          <div className="dropup">
+            <button className="dropup-button" id="dropup-button">Party</button>
+            <div className="dropup-content">
               <pattern onMouseDown={selectPattern}>Off</pattern>
               <pattern onMouseDown={selectPattern}>Solid</pattern>
               <pattern onMouseDown={selectPattern}>Flashing</pattern>
@@ -313,3 +313,4 @@ const PlayingWindow = (props) => {
 };
 
 export default PlayingWindow;
+export { pushToSQS };
