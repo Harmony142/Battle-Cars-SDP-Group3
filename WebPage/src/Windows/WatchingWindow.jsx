@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import "./Windows.css";
 import { Link } from "react-router-dom";
-import { playerName, selectedCar } from '../Home/Home.jsx'
+import { playerName, selectedCar, resetSelections } from '../Home/Home.jsx'
 import { scoreRed, scoreBlue, timer, car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName, winner, overtime }
     from '../App.js';
 
@@ -182,7 +182,8 @@ const WatchingWindow = (props) => {
         <div className="right-bar">
           <h1 className="score-blue" id="score-blue">0</h1>
           <div className="controls-wrapper">
-            <Link to={'/'} className="home-button" id="home-button" style={{bottom:'0px', right:'0px'}}>Back to Login</Link>
+            <Link to={'/'} className="home-button" id="home-button" style={{top:'0px', left:'0px'}}
+              onMouseDown={resetSelections}>Back to Login</Link>
           </div>
         </div>
       </div>

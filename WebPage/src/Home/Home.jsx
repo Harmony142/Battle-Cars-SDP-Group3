@@ -8,6 +8,11 @@ import "./Home.css";
 var playerName = '';
 var selectedCar = null;
 
+function resetSelections() {
+  playerName = '';
+  selectedCar = null;
+};
+
 // TODO lock cars that already have players with cursor indicator
 
 const Home = () => {
@@ -150,4 +155,4 @@ const Home = () => {
 };
 
 export default Home;
-export { playerName, selectedCar };
+export { playerName, selectedCar, resetSelections };

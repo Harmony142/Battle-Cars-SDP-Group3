@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import "./Windows.css";
 import { Link } from "react-router-dom";
-import { playerName, selectedCar } from '../Home/Home.jsx'
+import { playerName, selectedCar, resetSelections } from '../Home/Home.jsx'
 import { scoreRed, scoreBlue, timer, car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName, winner, overtime }
     from '../App.js';
 
@@ -48,7 +48,7 @@ function uuidv4() {
     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
-}
+};
 
 async function pushToSQS(payload) {
   if (selectedCar !== null) {
@@ -303,7 +303,8 @@ const PlayingWindow = (props) => {
               <h1 className="key" id="KeyD" style={{bottom: '0px', right: '0px'}}>D</h1>
             </div>
             <h1 className="shift-key" id="ShiftLeft">LShift</h1>
-            <Link to={'/'} className="home-button" id="home-button" style={{top:'0px', left:'0px'}}>Back to Login</Link>
+            <Link to={'/'} className="home-button" id="home-button" style={{top:'0px', left:'0px'}}
+              onMouseDown={resetSelections}>Back to Login</Link>
           </div>
         </div>
       </div>
