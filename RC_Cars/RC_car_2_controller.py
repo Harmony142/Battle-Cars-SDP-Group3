@@ -8,6 +8,11 @@ from digitalio import DigitalInOut, Direction
 from analogio import AnalogIn
 import neopixel
 
+# Variables for fine tuning the cars
+car_index = 1
+boost_speed = 65535 // 2
+turning_speed = 65535
+
 
 class MotorDriver:
     def __init__(self):
@@ -64,6 +69,7 @@ class MotorDriver:
         self.standby.value = not standby
 
 
+# Color Logic
 pixel_pin = board.A1
 num_pixels = 49
 pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=.05, auto_write=False)
@@ -77,7 +83,6 @@ CYAN = (0, 255, 255)
 BLUE = (0, 0, 255)
 PURPLE = (180, 0, 255)
 
-# Color Logic
 """
 PATTERNS:
 000 - Solid - All LEDs current_color
@@ -117,13 +122,12 @@ rainbow_interval = 7
 
 speedController = MotorDriver()
 speedController.set_stand_by(False)
-speedController.m1_speed(65535)
+speedController.m1_speed(turning_speed)
+speedController.m2_speed(boost_speed)
 uart = busio.UART(board.TX, board.RX, baudrate=9600)
 
 led = digitalio.DigitalInOut(board.D13)
 led.direction = digitalio.Direction.OUTPUT
-
-car_index = 0
 
 
 def rainbow(i):
@@ -337,17 +341,14 @@ while True:
 
         # Control speed boost. Logic is handled by the hub to avoid having to send the data back from the
         # car if we ever want to show fuel tank capacity
-        # TODO tweak these speeds until they feel appropriate
         if boost:
             # Can only go forward while boosting
-            speedController.m1_speed(65535 // 2)
-            speedController.m2_speed(65535 // 2)
+            speedController.m2_speed(boost_speed)
 
             speedController.forward()
             speedController.straight()
         else:
-            speedController.m1_speed(65535 // 4)
-            speedController.m2_speed(65535 // 4)
+            speedController.m2_speed(boost_speed // 2)
 
             # Control forwards or backwards
             if forward_backwards == 0b10:
