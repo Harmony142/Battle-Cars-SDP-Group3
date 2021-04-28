@@ -331,8 +331,8 @@ while True:
         # Customization Control
         if ensuing_customization:
             initialize_pattern(customization_data[0], tuple(customization_data[1:]))
-        else:
-            print('Message Received by Car', car_index)
+        # else:
+        #     print('Message Received by Car', car_index)
 
         # Car Controls
         forward_backwards = (command_flags & (0b11 << 4)) >> 4

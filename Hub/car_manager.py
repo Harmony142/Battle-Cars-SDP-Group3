@@ -60,7 +60,7 @@ def car_manager(car_number, mac_address):
 
                 # Send customization data if present
                 if customization_data is not None:
-                    logging.info('Sending Customization Data ({Pattern}, {Red}, {Green}, {Blue}) to Car {CarNumberw}'
+                    logging.info('Sending Customization Data ({Pattern}, {Red}, {Green}, {Blue}) to Car {CarNumber}'
                                  .format(CarNumber=car_number, **customization_data))
                     bluetooth_socket.send(customization_data['Pattern'].to_bytes(1, "little"))
                     bluetooth_socket.send(customization_data['Red'].to_bytes(1, "little"))
