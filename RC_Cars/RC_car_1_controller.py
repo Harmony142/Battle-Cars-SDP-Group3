@@ -10,8 +10,10 @@ import neopixel
 
 # Variables for fine tuning the cars
 car_index = 0
-boost_speed = 65535 // 2
-turning_speed = 65535
+MAX = 65535
+boost_speed = MAX // 2
+driving_speed = MAX // 4
+turning_speed = MAX
 
 
 class MotorDriver:
@@ -123,7 +125,7 @@ rainbow_interval = 7
 speedController = MotorDriver()
 speedController.set_stand_by(False)
 speedController.m1_speed(turning_speed)
-speedController.m2_speed(boost_speed)
+speedController.m2_speed(driving_speed)
 uart = busio.UART(board.TX, board.RX, baudrate=9600)
 
 led = digitalio.DigitalInOut(board.D13)
@@ -348,7 +350,7 @@ while True:
             speedController.forward()
             speedController.straight()
         else:
-            speedController.m2_speed(boost_speed // 2)
+            speedController.m2_speed(driving_speed)
 
             # Control forwards or backwards
             if forward_backwards == 0b10:
