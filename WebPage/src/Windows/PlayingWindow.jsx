@@ -5,6 +5,7 @@ import { playerName, selectedCar, resetSelections } from '../Home/Home.jsx'
 import { scoreRed, scoreBlue, timer, car1PlayerName, car2PlayerName, car3PlayerName, car4PlayerName, winner, overtime }
     from '../App.js';
 
+// Confetti variables
 const promise = require('promise');
 const confetti = require('canvas-confetti');
 confetti.Promise = promise;
@@ -25,6 +26,7 @@ function randomInRange(min, max) {
   return Math.random() * (max - min) + min;
 }
 
+// Command Variables
 const prevKeysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
 const currKeysPressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false};
 const allowed_keys = Object.keys(currKeysPressed);
@@ -50,8 +52,16 @@ function uuidv4() {
   });
 };
 
+var sendToHomeTime = null;
+
+function parseTime(time) {
+  var milliseconds = 0;
+  timer.split(':').reverse().forEach((number, index) => {milliseconds += parseInt(number) * (60 ** index) * 1000;});
+  return milliseconds;
+};
+
 async function pushToSQS(payload) {
-  if (selectedCar !== null) {
+  if (selectedCar !== null && sendToHomeTime === null) {
     const targetCar = selectedCar.split('-')[1];
     const currentPlayer = window['car' + targetCar + 'PlayerName'];
     if (currentPlayer === '' || playerName === currentPlayer) {
@@ -87,6 +97,18 @@ const sendCustomizationData = (event) => {
 };
 
 const PlayingWindow = (props) => {
+  // Send the player back to the login screen
+  useEffect(() => {
+    const interval = setInterval(function() {
+      if (sendToHomeTime !== null && Date.now() > sendToHomeTime) {
+        sendToHomeTime = null;
+        document.getElementById('home-button').click();
+      }
+     }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Red Confetti on Blue Side when Red Scores
   useEffect(() => {
     const interval = setInterval(function() {
@@ -181,16 +203,20 @@ const PlayingWindow = (props) => {
 
       // Update the victory card
       try {
-        const victoryCard = document.getElementById('victory-card')
-        if (winner == 'Red Team') {
+        const victoryCard = document.getElementById('victory-card');
+        if (winner !== '' && sendToHomeTime === null) {
+          sendToHomeTime = Date.now() + parseTime(timer);
+        }
+
+        if (winner === 'Red Team') {
             victoryCard.innerHTML = 'Red Team Wins!';
             victoryCard.style.background = 'firebrick';
             victoryCard.style.visibility = 'visible';
-        } else if (winner == 'Blue Team') {
+        } else if (winner === 'Blue Team') {
             victoryCard.innerHTML = 'Blue Team Wins!';
             victoryCard.style.background = 'dodgerblue';
             victoryCard.style.visibility = 'visible';
-        } else if (winner == 'Draw') {
+        } else if (winner === 'Draw') {
             victoryCard.innerHTML = 'It\'s a Draw!';
             victoryCard.style.background = 'linear-gradient(90deg, dodgerblue 5%, firebrick)';
             victoryCard.style.visibility = 'visible';
@@ -309,7 +335,7 @@ const PlayingWindow = (props) => {
             </div>
             <h1 className="shift-key" id="ShiftLeft">LShift</h1>
             <Link to={'/'} className="home-button" id="home-button" style={{top:'0px', left:'0px'}}
-              onMouseDown={resetSelections}>Back to Login</Link>
+              onClick={resetSelections}>Back to Login</Link>
           </div>
         </div>
       </div>

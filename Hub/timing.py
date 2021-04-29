@@ -1,11 +1,6 @@
 
-# TODO game stuff: Win Screen, Overtime, 5 min games, automatic reset, manual reset for car 1, 2, 3, 4, or all,
-# TODO             manual reset for team scores and timer
-
 # TODO timing stuff: calculate n using stats, loop over a range of values for message_rate, graph confidence intervals
 # TODO                for each message_rate, one line for using SQS and one for just in system
-
-# TODO testing stuff: try out testing script, test game stuff
 
 import uuid
 import numpy

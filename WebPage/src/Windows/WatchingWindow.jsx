@@ -183,7 +183,7 @@ const WatchingWindow = (props) => {
           <h1 className="score-blue" id="score-blue">0</h1>
           <div className="controls-wrapper">
             <Link to={'/'} className="home-button" id="home-button" style={{bottom:'0px', right:'0px'}}
-              onMouseDown={resetSelections}>Back to Login</Link>
+              onClick={resetSelections}>Back to Login</Link>
           </div>
         </div>
       </div>

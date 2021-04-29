@@ -87,6 +87,25 @@
     border-color: grey;
 }
 
+.disabled-car-selection {
+    position: absolute;
+    margin: 0px;
+    padding: 0px;
+    height: 100%;
+    width: 100%;
+
+    text-align: center;
+    line-height: 40px;
+
+    cursor: not-allowed;
+    background-color: grey;
+
+    border-style: outset;
+    border-width: 5px;
+    border-color: #666666;
+    visibility: hidden;
+}
+
 .car-player-name {
     position: absolute;
     margin: 0px;

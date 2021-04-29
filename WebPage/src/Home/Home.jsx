@@ -13,8 +13,6 @@ function resetSelections() {
   selectedCar = null;
 };
 
-// TODO lock cars that already have players with cursor indicator
-
 const Home = () => {
   useEffect(() => {
     const interval = setInterval(() => {
@@ -22,12 +20,25 @@ const Home = () => {
       try {
         for(var i = 1; i <=4; i++) {
           const carName = window['car' + i + 'PlayerName'];
-          const element = document.getElementById('car-' + i + '-player-name');
+          const label = document.getElementById('car-' + i + '-player-name');
+          const activeButton = document.getElementById('car-' + i).style;
+          const disabledButton = document.getElementById('disabled-car-' + i).style;
           if(carName !== '') {
-            element.innerHTML = 'Current Player: ' + (carName.length > 10 ? carName.slice(0, 10) + '...' : carName);
+            label.innerHTML = 'Current Player: ' + (carName.length > 10 ? carName.slice(0, 10) + '...' : carName);
+
+            // Disable button so other players can't select this unless the name is the same
+            if (playerName !== carName) {
+              activeButton.visibility = 'hidden';
+              disabledButton.visibility = 'visible';
+            } else {
+              activeButton.visibility = 'visible';
+              disabledButton.visibility = 'hidden';
+            }
           }
           else {
-            element.style.visibility = 'hidden';
+            activeButton.visibility = 'visible';
+            disabledButton.visibility = 'hidden';
+            label.style.visibility = 'hidden';
           }
         }
       } catch(err) {
@@ -42,8 +53,7 @@ const Home = () => {
     const playButtonStyle = document.getElementById('play-button').style;
     const disabledPlayButtonStyle = document.getElementById('disabled-play-button').style;
 
-    if(selectedCar !== null && playerName !== '')
-    {
+    if(selectedCar !== null && playerName !== '') {
         playButtonStyle.visibility = 'visible';
         disabledPlayButtonStyle.visibility = 'hidden';
     } else {
@@ -115,6 +125,7 @@ const Home = () => {
           <div className="car-wrapper" style={{top: '0px', left: '0px'}}>
             <h1 className="car-selection" id="car-1"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}>Car 1</h1>
+            <h1 className="disabled-car-selection" id="disabled-car-1">Car 1</h1>
             <h2 className="car-player-name" id="car-1-player-name"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}/>
           </div>
@@ -122,6 +133,7 @@ const Home = () => {
           <div className="car-wrapper" style={{bottom: '0px', left: '0px'}}>
             <h1 className="car-selection" id="car-2"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}>Car 2</h1>
+            <h1 className="disabled-car-selection" id="disabled-car-2">Car 2</h1>
             <h2 className="car-player-name" id="car-2-player-name"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}/>
           </div>
@@ -129,6 +141,7 @@ const Home = () => {
           <div className="car-wrapper" style={{top: '0px', right: '0px'}}>
             <h1 className="car-selection" id="car-3"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}>Car 3</h1>
+            <h1 className="disabled-car-selection" id="disabled-car-3">Car 3</h1>
             <h2 className="car-player-name" id="car-3-player-name"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}/>
           </div>
@@ -136,6 +149,7 @@ const Home = () => {
           <div className="car-wrapper" style={{bottom: '0px', right: '0px'}}>
             <h1 className="car-selection" id="car-4"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}>Car 4</h1>
+            <h1 className="disabled-car-selection" id="disabled-car-4">Car 4</h1>
             <h2 className="car-player-name" id="car-4-player-name"
               onMouseEnter={handleCarEnter} onMouseLeave={handleCarLeave} onMouseDown={handleCarSelection}/>
           </div>
