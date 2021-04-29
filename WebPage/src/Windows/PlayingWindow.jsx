@@ -205,6 +205,12 @@ const PlayingWindow = (props) => {
       try {
         const victoryCard = document.getElementById('victory-card');
         if (winner !== '' && sendToHomeTime === null) {
+          // Stop the car
+          const payload = JSON.parse(JSON.stringify({'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false}));
+          payload['PlayerName'] = playerName === '' ? null : playerName;
+          pushToSQS(payload);
+
+          // Go back to the home screen after the time is up
           sendToHomeTime = Date.now() + parseTime(timer);
         }
 
