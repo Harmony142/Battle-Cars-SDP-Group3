@@ -87,6 +87,7 @@ const sendCustomizationData = (event) => {
 };
 
 const PlayingWindow = (props) => {
+  // Red Confetti on Blue Side when Red Scores
   useEffect(() => {
     const interval = setInterval(function() {
       if (Date.now() < redEnd) {
@@ -103,6 +104,7 @@ const PlayingWindow = (props) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Blue Confetti on Red Side when Blue Scores
   useEffect(() => {
     const interval = setInterval(function() {
       if (Date.now() < blueEnd) {
@@ -119,6 +121,7 @@ const PlayingWindow = (props) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Game Over Confetti
   useEffect(() => {
     const interval = setInterval(function() {
       if (winner === 'Red Team' || winner === 'Blue Team') {
@@ -131,6 +134,7 @@ const PlayingWindow = (props) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Update Real-Time Information
   useEffect(() => {
     const interval = setInterval(() => {
       // Update the score
@@ -213,6 +217,7 @@ const PlayingWindow = (props) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Process user commands
   const handleKeyPress = (event) => {
     if(JSON.stringify(prevKeysPressed) !== JSON.stringify(currKeysPressed)){
       allowed_keys.forEach(key => {

@@ -147,7 +147,6 @@ if __name__ == '__main__':
         # Manual control for setting the game state
         if keyboard.is_pressed(set_state_hot_key):
             # Switch toggle and wait until key is not pressed
-            logging.warning('Setting Game State')
             try:
                 try:
                     red_score = int(input('New Red Score [non neg int]: '))
@@ -196,10 +195,10 @@ if __name__ == '__main__':
             # Switch toggle and wait until key is not pressed
             values = [str(i) for i in range(1, len(mac_addresses) + 1)]
             values.append('all')
-            reset = input('Reset car {}: '.format(values))
-            if reset in values:
+            reset_car = input('Reset car {}: '.format(values))
+            if reset_car in values:
                 logging.warning('Resetting Cars')
-                reset_car_manager(int(reset) - 1 if reset.isnumeric() else None)
+                reset_car_manager(int(reset_car) - 1 if reset_car.isnumeric() else None)
             else:
                 logging.warning('ValueError: Value mus be in {}'.format(values))
                 logging.warning('Cancelling resetting a car')
