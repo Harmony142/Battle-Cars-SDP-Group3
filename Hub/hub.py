@@ -45,6 +45,32 @@ if __name__ == '__main__':
 
     # Score keeping setup
     score_red, score_blue = 0, 0
+
+
+    def red_up():
+        global score_red
+        score_red += 1
+
+    def red_down():
+        global score_red
+        if score_red > 0:
+            score_red -= 1
+
+    def blue_up():
+        global score_blue
+        score_blue += 1
+
+    def blue_down():
+        global score_blue
+        if score_blue > 0:
+            score_blue -= 1
+
+    score_hot_keys = {
+        'y': red_up,
+        'h': red_down,
+        'u': blue_up,
+        'j': blue_down
+    }
     set_default_hot_key = 'i'
     set_state_hot_key = 'p'
     reset_car_hot_key = 'o'
@@ -108,7 +134,7 @@ if __name__ == '__main__':
                     for team in ['RED', 'BLUE']:
                         if line == 'GOAL ' + team:
                             globals()['score_' + team.lower()] += 1
-                            logging.info('{}\nRED: {}\nBLUE: {}'.format(line, score_red, score_blue))
+                            logging.info('{}\nRED: {} BLUE: {}'.format(line, score_red, score_blue))
 
             # Update database once a second for timer and car ownership
             if previous_update_time + time_between_updates < datetime.datetime.now():
@@ -155,6 +181,14 @@ if __name__ == '__main__':
                 winner = ''
                 while keyboard.is_pressed(set_default_hot_key):
                     pass
+
+            # Score Hot Keys
+            for hot_key, fxn in score_hot_keys.items():
+                if keyboard.is_pressed(hot_key):
+                    fxn()
+                    logging.warning('RED: {} BLUE: {}'.format(score_red, score_blue))
+                    while keyboard.is_pressed(hot_key):
+                        pass
 
             # Manual control for setting the game state
             if keyboard.is_pressed(set_state_hot_key):
@@ -216,5 +250,5 @@ if __name__ == '__main__':
                     logging.warning('Cancelling resetting a car')
     except SerialException:
         logging.warning('SerialException: active serial connection was unplugged')
-        logging.warning('RED: {}\nBLUE: {}\nTIME LEFT: {}'.format(
+        logging.warning('RED: {} BLUE: {}\nTIME LEFT: {}'.format(
             score_red, score_blue, end_time - datetime.datetime.now()))
