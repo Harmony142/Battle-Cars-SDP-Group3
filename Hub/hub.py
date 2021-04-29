@@ -8,7 +8,7 @@ from hub_common import initialize_dynamodb_client, push_game_state_to_database, 
 from car_manager import car_manager
 
 # Set the logging level
-logging.basicConfig(format='[%(asctime)s][%(filename)s][%(levelname)s]: %(message)s', level=logging.INFO)
+logging.basicConfig(format='[%(asctime)s][%(filename)s][%(levelname)s]: %(message)s', level=logging.WARNING)
 
 """
 ----- TO INSTALL PYBLUEZ ON WINDOWS -----
@@ -45,8 +45,8 @@ if __name__ == '__main__':
 
     # Score keeping setup
     score_red, score_blue = 0, 0
-    set_state_hot_key = 'q'
-    reset_car_hot_key = 'w'
+    set_state_hot_key = 'p'
+    reset_car_hot_key = 'o'
 
     winner = ''
     overtime = False
