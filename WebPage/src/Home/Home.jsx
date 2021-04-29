@@ -13,37 +13,41 @@ function resetSelections() {
   selectedCar = null;
 };
 
+function updateCarButtons() {
+  // Update who is driving what car
+  try {
+    for(var i = 1; i <=4; i++) {
+      const carName = window['car' + i + 'PlayerName'];
+      const label = document.getElementById('car-' + i + '-player-name');
+      const activeButton = document.getElementById('car-' + i).style;
+      const disabledButton = document.getElementById('disabled-car-' + i).style;
+      if(carName !== '') {
+        label.innerHTML = 'Current Player: ' + (carName.length > 10 ? carName.slice(0, 10) + '...' : carName);
+
+        // Disable button so other players can't select this unless the name is the same
+        if (playerName !== carName) {
+          activeButton.visibility = 'hidden';
+          disabledButton.visibility = 'visible';
+        } else {
+          activeButton.visibility = 'visible';
+          disabledButton.visibility = 'hidden';
+        }
+      }
+      else {
+        activeButton.visibility = 'visible';
+        disabledButton.visibility = 'hidden';
+        label.style.visibility = 'hidden';
+      }
+    }
+  } catch(err) {
+    console.log("could not update player names", err);
+  }
+};
+
 const Home = () => {
   useEffect(() => {
     const interval = setInterval(() => {
-      // Update who is driving what car
-      try {
-        for(var i = 1; i <=4; i++) {
-          const carName = window['car' + i + 'PlayerName'];
-          const label = document.getElementById('car-' + i + '-player-name');
-          const activeButton = document.getElementById('car-' + i).style;
-          const disabledButton = document.getElementById('disabled-car-' + i).style;
-          if(carName !== '') {
-            label.innerHTML = 'Current Player: ' + (carName.length > 10 ? carName.slice(0, 10) + '...' : carName);
-
-            // Disable button so other players can't select this unless the name is the same
-            if (playerName !== carName) {
-              activeButton.visibility = 'hidden';
-              disabledButton.visibility = 'visible';
-            } else {
-              activeButton.visibility = 'visible';
-              disabledButton.visibility = 'hidden';
-            }
-          }
-          else {
-            activeButton.visibility = 'visible';
-            disabledButton.visibility = 'hidden';
-            label.style.visibility = 'hidden';
-          }
-        }
-      } catch(err) {
-        console.log("could not update player names", err);
-      }
+      updateCarButtons();
     }, 1000);
 
     return () => clearInterval(interval);
@@ -99,6 +103,7 @@ const Home = () => {
 
   const handleNameChange = (event) => {
     playerName = event.target.value;
+    updateCarButtons();
     updatePlayButton();
   };
 
