@@ -45,6 +45,7 @@ if __name__ == '__main__':
 
     # Score keeping setup
     score_red, score_blue = 0, 0
+    set_default_hot_key = 'i'
     set_state_hot_key = 'p'
     reset_car_hot_key = 'o'
 
@@ -144,6 +145,17 @@ if __name__ == '__main__':
                 push_game_state_to_database(dynamodb_client, score_red, score_blue,
                                             end_time - previous_update_time, winner, overtime)
 
+            # Reset the game to default state
+            if keyboard.is_pressed(set_default_hot_key):
+                logging.warning('Resetting to default state')
+                score_red = 0
+                score_blue = 0
+                end_time = datetime.datetime.now() + datetime.timedelta(minutes=2)
+                overtime = False
+                winner = ''
+                while keyboard.is_pressed(set_default_hot_key):
+                    pass
+
             # Manual control for setting the game state
             if keyboard.is_pressed(set_state_hot_key):
                 # Switch toggle and wait until key is not pressed
@@ -179,7 +191,7 @@ if __name__ == '__main__':
                     win = 'Red Team' if win == 'R' else 'Blue Team' if win == 'B' else 'Draw' if win == 'D' else ''
 
                     # All values are valid at this point
-                    logging.info('Setting game state')
+                    logging.warning('Setting game state')
                     score_red = red_score
                     score_blue = blue_score
                     end_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes, seconds=seconds)
