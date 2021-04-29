@@ -54,6 +54,19 @@ function uuidv4() {
 
 var sendToHomeTime = null;
 
+// Set the car to stop moving
+function stopCar() {
+  const payload = JSON.parse(JSON.stringify({'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false}));
+  payload['PlayerName'] = playerName === '' ? null : playerName;
+  pushToSQS(payload);
+};
+
+// Stop the car before leaving the page
+function leaveReset() {
+  stopCar();
+  resetSelections();
+};
+
 function parseTime(time) {
   var milliseconds = 0;
   timer.split(':').reverse().forEach((number, index) => {milliseconds += parseInt(number) * (60 ** index) * 1000;});
@@ -205,10 +218,7 @@ const PlayingWindow = (props) => {
       try {
         const victoryCard = document.getElementById('victory-card');
         if (winner !== '' && sendToHomeTime === null) {
-          // Stop the car
-          const payload = JSON.parse(JSON.stringify({'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'ShiftLeft':false}));
-          payload['PlayerName'] = playerName === '' ? null : playerName;
-          pushToSQS(payload);
+          stopCar();
 
           // Go back to the home screen after the time is up
           sendToHomeTime = Date.now() + parseTime(timer);
@@ -341,7 +351,7 @@ const PlayingWindow = (props) => {
             </div>
             <h1 className="shift-key" id="ShiftLeft">LShift</h1>
             <Link to={'/'} className="home-button" id="home-button" style={{top:'0px', left:'0px'}}
-              onClick={resetSelections}>Back to Login</Link>
+              onClick={leaveReset}>Back to Login</Link>
           </div>
         </div>
       </div>
