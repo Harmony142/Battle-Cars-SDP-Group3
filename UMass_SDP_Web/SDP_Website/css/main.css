@@ -33,9 +33,9 @@
  *  # intro 
  *  # about
  *    ## timeline
- *  # services
+ *  # system-specs
  *  # CTA
- *  # works
+ *  # diagrams
  *  # testimonials
  *  # contact
  *  # footer
@@ -53,6 +53,13 @@
  * ------------------------------------------------------------------- */
 html {
   font-size: 10px;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+html::-webkit-scrollbar {
+  display: none;
 }
 
 @media screen and (max-width:400px) {
@@ -1944,6 +1951,15 @@ input::-moz-focus-inner {
   align-content: center;
 }
 
+.gallery-video {
+  position: relative;
+  margin: 0px;
+  left: 10%;
+  height: 80%;
+  width: 80%;
+  align-content: center;
+}
+
 .intro-content {
   height: 45%;
   max-width: 1140px;
@@ -2538,10 +2554,10 @@ input::-moz-focus-inner {
 
 
 /* ===================================================================
- * # services
+ * # system-specs
  *
  * ------------------------------------------------------------------- */
-.s-services {
+.s-system-specs {
   padding-top: 19.2rem;
   padding-bottom: 16rem;
   background-repeat: no-repeat;
@@ -2552,7 +2568,7 @@ input::-moz-focus-inner {
   position: relative;
 }
 
-.s-services .shadow-overlay {
+.s-system-specs .shadow-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -2562,7 +2578,7 @@ input::-moz-focus-inner {
   background: radial-gradient(circle, rgba(0, 0, 0, 0) 0%, black 80%);
 }
 
-.s-services::before {
+.s-system-specs::before {
   content: "";
   position: absolute;
   top: 0;
@@ -2573,40 +2589,40 @@ input::-moz-focus-inner {
   opacity: .85;
 }
 
-.s-services h4 {
+.s-system-specs h4 {
   font-weight: 400;
   color: #ffffff;
 }
 
-.s-services a {
+.s-system-specs a {
   color: #cf1767;
 }
 
-.s-services a:hover,
-.s-services a:focus,
-.s-services a:active {
+.s-system-specs a:hover,
+.s-system-specs a:focus,
+.s-system-specs a:active {
   color: #ffffff;
 }
 
-.services-list {
+.system-specs-list {
   max-width: 1240px;
   margin-top: 8.8rem;
   counter-reset: ctr;
   position: relative;
 }
 
-.services-list .item-service {
+.system-specs-list .item-service {
   margin-bottom: 2.4rem;
   padding: 0 30px;
   min-height: 44.8rem;
 }
 
-.services-list .item-service__content {
+.system-specs-list .item-service__content {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 3.6rem;
 }
 
-.services-list .item-service__content::before {
+.system-specs-list .item-service__content::before {
   display: block;
   content: counter(ctr, decimal-leading-zero) ".";
   counter-increment: ctr;
@@ -2620,65 +2636,65 @@ input::-moz-focus-inner {
 
 /* ------------------------------------------------------------------- 
  * responsive:
- * services
+ * system-specs
  * ------------------------------------------------------------------- */
 @media screen and (max-width:1400px) {
-  .services-list .item-service {
+  .system-specs-list .item-service {
     padding: 0 20px;
   }
 
-  .services-list .item-service__content::before {
+  .system-specs-list .item-service__content::before {
     font-size: 7.2rem;
   }
 
 }
 
 @media screen and (max-width:1200px) {
-  .services-list {
+  .system-specs-list {
     max-width: 900px;
   }
 
-  .services-list .item-service__content::before {
+  .system-specs-list .item-service__content::before {
     font-size: 6.8rem;
   }
 
 }
 
 @media screen and (max-width:800px) {
-  .s-services {
+  .s-system-specs {
     padding-top: 16rem;
     padding-bottom: 16rem;
   }
 
-  .services-list {
+  .system-specs-list {
     max-width: 600px;
     margin-top: 8rem;
   }
 
-  .services-list .item-service {
+  .system-specs-list .item-service {
     padding: 0 16px;
     min-height: 0;
   }
 
-  .services-list .item-service__content::before {
+  .system-specs-list .item-service__content::before {
     font-size: 5.4rem;
   }
 
 }
 
 @media screen and (max-width:600px) {
-  .services-list .item-service {
+  .system-specs-list .item-service {
     padding: 0 10px;
   }
 
 }
 
 @media screen and (max-width:400px) {
-  .services-list .item-service {
+  .system-specs-list .item-service {
     padding: 0;
   }
 
-  .services-list .item-service__content::before {
+  .system-specs-list .item-service__content::before {
     font-size: 4.8rem;
   }
 
@@ -2764,10 +2780,10 @@ input::-moz-focus-inner {
 
 
 /* ===================================================================
- * # works
+ * # diagrams
  *
  * ------------------------------------------------------------------- */
-.s-works {
+.s-diagrams {
   padding-top: 19.2rem;
   padding-bottom: 16rem;
   background-color: #ffffff;
@@ -2925,7 +2941,7 @@ input::-moz-focus-inner {
 
 /* ------------------------------------------------------------------- 
  * responsive:
- * works
+ * diagrams
  * ------------------------------------------------------------------- */
 @media screen and (max-width:1200px) {
   .masonry__brick {
@@ -2979,7 +2995,7 @@ input::-moz-focus-inner {
 }
 
 @media screen and (max-width:800px) {
-  .s-works {
+  .s-diagrams {
     padding-top: 16rem;
   }
 
