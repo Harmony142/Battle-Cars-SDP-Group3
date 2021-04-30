@@ -1516,6 +1516,17 @@ input::-moz-focus-inner {
   color: #000000;
 }
 
+.linked-in {
+  position: absolute;
+  margin: 0px;
+  top: 0px;
+  left: 10%;
+  height: 48px;
+  width: 48px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
 .ss-dark .section-heading,
 .ss-dark .section-desc {
   color: #ffffff;
@@ -1594,7 +1605,8 @@ input::-moz-focus-inner {
  * ------------------------------------------------------------------- */
 .s-header {
   position: absolute;
-  top: 2rem;
+  background-color: #050505;
+  top: 0;
   left: 0;
   width: 100%;
   height: 78px;
@@ -1909,14 +1921,27 @@ input::-moz-focus-inner {
  *
  * ------------------------------------------------------------------- */
 .s-intro {
+  position: static;
+  top: 78px;
   width: 100%;
   height: 100vh;
   min-height: 792px;
+  background-color: #050505;
+  /*
   background-image: url(../images/Intro_Pic.jpg);
-  background-size: 80% 75%;
+  background-size: 100% 100%;
   background-repeat:   no-repeat;
   background-position: center center;              /* optional, center the image */
   /* background-size:cover; */
+}
+
+
+.s-intro-video {
+  position: absolute;
+  margin: 0px;
+  height: 100%;
+  width: 100%;
+  align-content: center;
 }
 
 .intro-content {
@@ -2522,7 +2547,7 @@ input::-moz-focus-inner {
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
-  background-image: url(../images/services-bg.jpg);
+  background-image: url(../images/cars.jpg);
   color: rgba(255, 255, 255, 0.7);
   position: relative;
 }
@@ -2533,7 +2558,7 @@ input::-moz-focus-inner {
   left: 0;
   width: 100%;
   height: 100%;
-  opacity: .3;
+  opacity: .1;
   background: radial-gradient(circle, rgba(0, 0, 0, 0) 0%, black 80%);
 }
 
