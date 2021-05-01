@@ -176,7 +176,7 @@ if __name__ == '__main__':
                 logging.warning('Resetting to default state')
                 score_red = 0
                 score_blue = 0
-                end_time = datetime.datetime.now() + datetime.timedelta(minutes=2)
+                end_time = datetime.datetime.now() + datetime.timedelta(minutes=3)
                 overtime = False
                 winner = ''
                 while keyboard.is_pressed(set_default_hot_key):
